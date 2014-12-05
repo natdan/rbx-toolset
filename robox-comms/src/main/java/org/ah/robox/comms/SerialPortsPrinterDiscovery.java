@@ -20,11 +20,11 @@ import gnu.io.SerialPort;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+
+import org.ah.robox.comms.utils.SharedLibraries;
 
 /**
  *
@@ -33,31 +33,7 @@ import java.util.List;
 public class SerialPortsPrinterDiscovery implements PrinterDiscovery {
 
     {
-        System.setProperty("java.library.path", "/usr/lib/jni");
-
-        String pathToAdd = "/usr/lib/jni";
-
-        try {
-            Field usrPathsField = ClassLoader.class.getDeclaredField("usr_paths");
-            usrPathsField.setAccessible(true);
-
-            String[] paths = (String[]) usrPathsField.get(null);
-
-            boolean found = false;
-            for (String path : paths) {
-                if (path.equals(pathToAdd)) {
-                    found = true;
-                }
-            }
-
-            if (!found) {
-                String[] newPaths = Arrays.copyOf(paths, paths.length + 1);
-                newPaths[newPaths.length - 1] = pathToAdd;
-                usrPathsField.set(null, newPaths);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to initialise native library " + pathToAdd, e);
-        }
+        SharedLibraries.load("rxtxSerial");
     }
 
     public SerialPortsPrinterDiscovery() {
