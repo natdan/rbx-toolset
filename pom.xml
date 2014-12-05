@@ -23,7 +23,8 @@
       </dependency>
       <dependency>
         <groupId>org.ah.robox</groupId>
-        <artifactId>robox-comms</artifactId>
+        <artifactId>robox-toolset</artifactId>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>junit</groupId>
