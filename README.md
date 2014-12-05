@@ -1,4 +1,4 @@
 rbx-toolset
 ===========
 
-Toolset for Robox
+Toolset for Robox 3d printer.
