@@ -24,11 +24,30 @@ import org.ah.robox.comms.response.StandardResponse;
  *
  * @author Daniel Sendula
  */
-public class PauseCommand {
+public class AbortPrintCommand {
 
     public static void execute(PrinterChannel selectedChannel, List<String> args) throws Exception {
+        for (String a : args) {
+            if ("-?".equals(a) || "-h".equals(a) || "--help".equals(a)) {
+                printHelp();
+            } else {
+                System.err.println("Unknown option: '" + a + "'");
+                printHelp();
+                System.exit(1);
+            }
+        }
+
         Printer printer = new RoboxPrinter(selectedChannel);
 
-        StandardResponse response = printer.pausePrinter();
+        StandardResponse response = printer.abortPrint();
+        Main.processStandardResponse(response);
+    }
+
+    public static void printHelp() {
+        System.out.println("Usage: rbx [<general-options>] abort [<specific-options>]");
+        System.out.println("");
+        Main.printGeneralOptions();
+        System.out.println("");
+        Main.printSpecificOptions();
     }
 }

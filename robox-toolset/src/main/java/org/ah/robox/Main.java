@@ -18,6 +18,7 @@ import java.util.List;
 import org.ah.robox.comms.PrinterChannel;
 import org.ah.robox.comms.SerialPortsPrinterDiscovery;
 import org.ah.robox.comms.response.ResponseFactory;
+import org.ah.robox.comms.response.StandardResponse;
 
 /**
  *
@@ -43,28 +44,33 @@ public class Main {
             } else if (printerFlag) {
                 printerId = arg;
                 printerFlag = false;
+            } else if ("-p".equals(arg) || "--printer".equals(arg)) {
+                printerFlag = true;
+            } else if ("-v".equals(arg) || "--verbose".equals(arg)) {
+                verboseFlag = true;
+            } else if ("-d".equals(arg) || "--debug".equals(arg)) {
+                debugFlag = true;
+            } else if ("-?".equals(arg) || "-h".equals(arg) || "--help".equals(arg)) {
+                command = "help";
+            } else if ("list".equals(arg)) {
+                command = "list";
+                furtherArgsFlag = true;
+            } else if ("status".equals(arg)) {
+                command = "status";
+                furtherArgsFlag = true;
+            } else if ("pause".equals(arg)) {
+                command = "pause";
+                furtherArgsFlag = true;
+            } else if ("resume".equals(arg)) {
+                command = "resume";
+                furtherArgsFlag = true;
+            } else if ("abort".equals(arg)) {
+                command = "abort";
+                furtherArgsFlag = true;
             } else {
-                if ("-p".equals(arg) || "--printer".equals(arg)) {
-                    printerFlag = true;
-                } else if ("-v".equals(arg) || "--verbose".equals(arg)) {
-                    verboseFlag = true;
-                } else if ("-d".equals(arg) || "--debug".equals(arg)) {
-                    debugFlag = true;
-                } else if ("-?".equals(arg) || "-h".equals(arg) || "--help".equals(arg)) {
-                    command = "help";
-                } else if ("list".equals(arg)) {
-                    command = "list";
-                    furtherArgsFlag = true;
-                } else if ("status".equals(arg)) {
-                    command = "status";
-                    furtherArgsFlag = true;
-                } else if ("pause".equals(arg)) {
-                    command = "pause";
-                    furtherArgsFlag = true;
-                } else if ("resume".equals(arg)) {
-                    command = "resume";
-                    furtherArgsFlag = true;
-                }
+                System.err.println("Unknown option: '" + arg + "'");
+                printHelp();
+                System.exit(1);
             }
         }
 
@@ -119,9 +125,11 @@ public class Main {
                     if ("status".equals(command)) {
                         PrintStatusCommand.execute(selectedChannel, furtherArgs);
                     } else if ("pause".equals(command)) {
-                        PauseCommand.execute(selectedChannel, furtherArgs);
+                        PausePrinterCommand.execute(selectedChannel, furtherArgs);
                     } else if ("resume".equals(command)) {
-                        ResumeCommand.execute(selectedChannel, furtherArgs);
+                        ResumePrinterCommand.execute(selectedChannel, furtherArgs);
+                    } else if ("abort".equals(command)) {
+                        ResumePrinterCommand.execute(selectedChannel, furtherArgs);
                     }
                 } finally {
                     selectedChannel.close();
@@ -130,7 +138,46 @@ public class Main {
         }
     }
 
+    public static void printGeneralOptions() {
+        System.out.println("  General options are one of these:");
+        System.out.println("  -v | --verbose   - increases voutput erbosity level");
+        System.out.println("  -d | --debug     - increases debug level");
+        System.out.println("  -p | --printer   - if more than one printer is connected to your");
+        System.out.println("                     computer you must select which one command is");
+        System.out.println("                     going to be applied on. You can get list of");
+        System.out.println("                     available printers using 'list' command");
+    }
+
+    public static void printSpecificOptions() {
+        System.out.println("  Specific options are:");
+        System.out.println("");
+        System.out.println("  -h | --help | -?     - this page");
+    }
+
     public static void printHelp() {
-        System.out.println("Usage: ...");
+        System.out.println("Usage: rbx [<general-options>] <command> [<specific-options>]");
+        System.out.println("");
+        System.out.println("  General options are one of these:");
+        System.out.println("  -h | --help | -? - this page");
+        printGeneralOptions();
+        System.out.println("");
+        System.out.println("  Supported commands are:");
+        System.out.println("");
+        System.out.println("  list     - lists attached printers");
+        System.out.println("  status   - displays printer's status");
+        System.out.println("  pause    - pauses current print if there's one");
+        System.out.println("  resume   - resumes current print if there's one");
+        System.out.println("  abort    - aborts current print if there's one");
+        System.out.println("");
+        System.out.println("  Tip: further help can be obtained if '-h'/'-?'/'--help; is specified");
+        System.out.println("  after commmand. Example: ");
+        System.out.println("");
+        System.out.println("  rbx status --help");
+    }
+
+    /**
+     * @param response
+     */
+    public static void processStandardResponse(StandardResponse response) {
     }
 }

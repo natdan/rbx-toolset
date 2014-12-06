@@ -71,4 +71,14 @@ public class RoboxPrinter implements Printer {
         throw new UnexpectedPrinterResponse(response);
     }
 
+    public StandardResponse abortPrint() throws IOException {
+        printerRequestFactory.sendPrinterAbortPrint();
+        Response response = printerResponseFactory.readResponse();
+        if (response instanceof StandardResponse) {
+            return (StandardResponse)response;
+        }
+
+        throw new UnexpectedPrinterResponse(response);
+    }
+
 }

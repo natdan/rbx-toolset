@@ -10,25 +10,24 @@
  *
  *
  *******************************************************************************/
-package org.ah.robox;
-
-import java.util.List;
-
-import org.ah.robox.comms.Printer;
-import org.ah.robox.comms.PrinterChannel;
-import org.ah.robox.comms.RoboxPrinter;
-import org.ah.robox.comms.response.Response;
+package org.ah.robox.comms.response;
 
 /**
- *
- *
- * @author Daniel Sendula
- */
-public class ResumeCommand {
+*
+* @author Daniel Sendula
+*/
+public class PrinterIdResponse implements Response {
 
-    public static void execute(PrinterChannel selectedChannel, List<String> args) throws Exception {
-        Printer printer = new RoboxPrinter(selectedChannel);
+    private String printerId;
 
-        Response response = printer.resumePrinter();
+    public PrinterIdResponse() {
+    }
+
+    public String getPrinterId() {
+        return printerId;
+    }
+
+    public void setPrinterId(String printerId) {
+        this.printerId = printerId;
     }
 }

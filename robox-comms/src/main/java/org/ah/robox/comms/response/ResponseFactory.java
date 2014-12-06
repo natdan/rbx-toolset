@@ -27,6 +27,7 @@ public class ResponseFactory {
 
     public static final int PRINTER_STATUS_RESPONSE = 0xe1;
     public static final int STANDARD_RESPONSE = 0xe3;
+    public static final int PRINTER_ID_RESPONSE = 0xe5;
 
     public static boolean DEBUG = false;
 
@@ -44,8 +45,7 @@ public class ResponseFactory {
         if (r < 0) { r = 256 + r; }
 
         if (r == PRINTER_STATUS_RESPONSE) {
-            PrinterStatus response = new PrinterStatus();
-            this.response = response;
+            response = new PrinterStatus();
             buffer = new byte[165];
             ptr = 0;
             readBuffer(in, buffer);
@@ -61,6 +61,11 @@ public class ResponseFactory {
             buffer = new byte[32];
             ptr = 0;
             readBuffer(in, buffer);
+
+        } else if (r == PRINTER_ID_RESPONSE) {
+            response = new PrinterIdResponse();
+            buffer = new byte[256];
+            extractString("printid", 256, TRIM_STRING_CONVERTER);
 
         } else {
             return new UnknownResponse(r);

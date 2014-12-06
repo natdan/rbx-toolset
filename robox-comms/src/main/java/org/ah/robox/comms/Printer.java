@@ -31,4 +31,6 @@ public interface Printer {
 
     StandardResponse resumePrinter() throws IOException;
 
+    StandardResponse abortPrint() throws IOException;
+
 }
