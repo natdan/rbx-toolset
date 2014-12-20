@@ -69,9 +69,9 @@ public class SharedLibraries {
             if (isOSX) {
                 addPath(System.getProperty("java.io.tmpdir") + JAVA_NATIVE_LIB_TEMP_DIR + "osx");
                 if (!is64Bit) {
-                    loadLibrary("osx/lib" + name + ".dylib");
+                    loadLibrary("osx/lib" + name + ".jnilib");
                 } else {
-                    loadLibrary("osx/lib" + name + "64.dylib");
+                    loadLibrary("osx/lib" + name + "64.jnilib");
                 }
             }
         } catch (IOException e) {

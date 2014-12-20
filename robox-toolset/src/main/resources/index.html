@@ -1,0 +1,74 @@
+<html>
+<head>
+  <title>Print status</title>
+  <style type="text/css">
+
+body, td {
+  font-family: "Arial", "sans-serif";
+}
+
+.container {
+  width: 90%;
+  margin: 12px;
+}
+.first {
+  float: left;
+  margin: 2px;
+}
+.last {
+  float: right;
+  margin: 2px;
+}
+.adjust {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  margin: 2px;
+}
+.while-center {
+  margin-left: auto;
+  margin-right: auto;
+}
+table {
+  border-collapse: collapse;
+}
+table, th, td {
+   border: 0px;
+}
+.clear { clear: both; }
+.estimate {
+  font-size: 200%;
+}
+h1:after, h2:after
+{
+    content: ' ';
+    display: block;
+    border: 2px solid black;
+}
+  </style>
+</head>
+<body>
+  <h1>Robox Status</h1>
+  <div class="container">
+    <div class="first">
+      <table>
+        <tr><td>Printer Status:&nbsp;&nbsp;</td><td>${status}</td></tr>
+        <tr><td>Job id:</td><td>${job_id}</td></tr>
+        <tr><td>Busy:</td><td>${busy}</td></tr>
+        <tr><td>Current line:</td><td>${current_line} / ${total_lines}</td></tr>
+      </table>
+    </div>
+    <div class="first">&nbsp;&nbsp;</div>
+    <div class="last">
+      <div class="while-center">
+        <div>Estimate:</div>
+        <div class="estimate">${estimate}</div>
+      </div>
+    </div>
+  </div>
+  <div class="clear"></div>
+  <h2>Snapshot picture</h2>
+  <img src="/capture.jpg"/></br>
+</body>
+</html>
+

@@ -14,7 +14,7 @@ package org.ah.robox.comms;
 
 import java.io.IOException;
 
-import org.ah.robox.comms.response.PrinterStatus;
+import org.ah.robox.comms.response.PrinterStatusResponse;
 import org.ah.robox.comms.response.StandardResponse;
 
 /**
@@ -25,7 +25,9 @@ public interface Printer {
 
     void close();
 
-    PrinterStatus getPrinterStatus() throws IOException;
+    PrinterChannel getPrinterChannel();
+
+    PrinterStatusResponse getPrinterStatus() throws IOException;
 
     StandardResponse pausePrinter() throws IOException;
 

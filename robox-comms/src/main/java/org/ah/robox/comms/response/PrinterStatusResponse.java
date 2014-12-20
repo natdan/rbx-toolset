@@ -16,14 +16,14 @@ package org.ah.robox.comms.response;
  *
  * @author Daniel Sendula
  */
-public class PrinterStatus implements Response {
+public class PrinterStatusResponse implements Response {
 
     private String printJob;
     private int lineNumber;
     private PrinterPause pause = PrinterPause.UNKNOWN;
     private boolean busy;
 
-    public PrinterStatus() {
+    public PrinterStatusResponse() {
     }
 
     public String toString() {

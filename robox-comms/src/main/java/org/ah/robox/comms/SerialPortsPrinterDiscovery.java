@@ -22,7 +22,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.ah.robox.comms.utils.SharedLibraries;
 
@@ -36,50 +38,119 @@ public class SerialPortsPrinterDiscovery implements PrinterDiscovery {
         SharedLibraries.load("rxtxSerial");
     }
 
+    private boolean verbose = false;
+    private boolean debug = false;
+    private Map<String, SerialPortPrinterChannel> channels = new HashMap<String, SerialPortPrinterChannel>();
+
+    protected void closed(SerialPortPrinterChannel channel) {
+        channels.remove(channel);
+    }
+
+    public void setVerbose(boolean verbose) {
+        this.verbose = verbose;
+    }
+
+    public void setDebug(boolean debug) {
+        this.debug = debug;
+    }
+
+
     public SerialPortsPrinterDiscovery() {
     }
 
-    public List<PrinterChannel> findPrinters() throws IOException {
+    public List<PrinterChannel> findAllPrinters() throws IOException {
         List<PrinterChannel> printerChannels = new ArrayList<PrinterChannel>();
 
-        File devSerialById = new File("/dev/serial/by-id");
+        File devSerialById = null;
+        boolean isWindows = System.getProperty("os.name").contains("Windows");
+        boolean isLinux = System.getProperty("os.name").contains("Linux");
+        boolean isOSX = System.getProperty("os.name").contains("Mac");
+        if (isWindows) {
+            System.err.println("Windwos operating system is not yet supported. Check later");
+            System.exit(1);
+        } else if (isLinux) {
+            devSerialById = new File("/dev/serial/by-id");
+            if (verbose) {
+                System.out.println("Scanning " + devSerialById.getAbsolutePath() + " for Robox printers");
+            }
+        } else if (isOSX) {
+            System.err.println("OSX operating system is not yet supported. Check later");
+            System.exit(1);
+        } else {
+            System.err.println("Operating system " + System.getProperty("os.name") + " not supported");
+            System.exit(1);
+        }
 
-        if (devSerialById.exists()) {
+        if (devSerialById != null && devSerialById.exists()) {
             for (File devFile : devSerialById.listFiles()) {
                 String devName = devFile.getName();
                 if (devName.contains("Robox")) {
-                    String id = devName;
 
                     if (Files.isSymbolicLink(devFile.toPath())) {
+                        if (debug) {
+                            System.out.println("Device " + devFile.getAbsolutePath() + " is symbolic link. Resolving it.");
+                        }
                         devName = new File(devFile.getParent(), Files.readSymbolicLink(devFile.toPath()).toString()).getCanonicalPath();
+                        if (debug) {
+                            System.out.println("Device " + devFile.getAbsolutePath() + " symbolic link is resolved to " + devName);
+                        }
                     }
 
                     try {
-                        CommPortIdentifier portIdentifier = CommPortIdentifier.getPortIdentifier(devName);
-
-                        if (portIdentifier.isCurrentlyOwned()) {
-                            System.err.println("Error: Port is currently in use");
-                            System.exit(1);
+                        if (verbose) {
+                            System.out.println("Trying to open device " + devName);
+                        }
+                        SerialPortPrinterChannel channel = channels.get(devName);
+                        if (channel != null) {
+                            printerChannels.add(channel);
                         } else {
-                            int timeout = 2000;
 
-                            CommPort commPort = portIdentifier.open("Robox", timeout);
+                            CommPortIdentifier portIdentifier = CommPortIdentifier.getPortIdentifier(devName);
 
-                            if (commPort instanceof SerialPort) {
-                                SerialPort serialPort = (SerialPort)commPort;
+                            if (portIdentifier.isCurrentlyOwned()) {
+                                System.err.println("Error: Port is currently in use");
+                                System.exit(1);
+                            } else {
+                                int timeout = 2000;
 
-                                SerialPortPrinterChannel printerChannel = new SerialPortPrinterChannel(id, devName, serialPort);
-                                printerChannels.add(printerChannel);
+                                CommPort commPort = portIdentifier.open("Robox", timeout);
+
+                                if (commPort instanceof SerialPort) {
+                                    SerialPort serialPort = (SerialPort)commPort;
+
+
+                                    SerialPortPrinterChannel printerChannel = new SerialPortPrinterChannel(this, devName, serialPort);
+                                    printerChannel.updateDeviceId();
+
+                                    channels.put(devName, printerChannel);
+                                    printerChannels.add(printerChannel);
+                                } else {
+                                    if (verbose) {
+                                        System.err.println("Device " + devName + " is not serial port");
+                                    }
+                                }
                             }
                         }
                     } catch (NoSuchPortException e) {
-                        // throw new IOException(e);
-                        // e.printStackTrace();
+                        if (debug) {
+                            e.printStackTrace();
+                        } else if (verbose) {
+                            System.err.println(e.getMessage());
+                        }
                     } catch (PortInUseException e) {
-                        // throw new IOException(e);
-                        // e.printStackTrace();
+                        if (debug) {
+                            e.printStackTrace();
+                        } else if (verbose) {
+                            System.err.println(e.getMessage());
+                        }
+                    } catch (IOException e) {
+                        if (debug) {
+                            e.printStackTrace();
+                        } else if (verbose) {
+                            System.err.println(e.getMessage());
+                        }
+                        throw e;
                     }
-
                 }
             }
         }

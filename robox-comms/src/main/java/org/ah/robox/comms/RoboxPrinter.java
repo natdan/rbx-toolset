@@ -15,7 +15,7 @@ package org.ah.robox.comms;
 import java.io.IOException;
 
 import org.ah.robox.comms.request.RequestFactory;
-import org.ah.robox.comms.response.PrinterStatus;
+import org.ah.robox.comms.response.PrinterStatusResponse;
 import org.ah.robox.comms.response.Response;
 import org.ah.robox.comms.response.ResponseFactory;
 import org.ah.robox.comms.response.StandardResponse;
@@ -41,11 +41,15 @@ public class RoboxPrinter implements Printer {
         printerChannel.close();
     }
 
-    public PrinterStatus getPrinterStatus() throws IOException {
+    public PrinterChannel getPrinterChannel() {
+        return printerChannel;
+    }
+
+    public PrinterStatusResponse getPrinterStatus() throws IOException {
         printerRequestFactory.sendPrinterStatusRequest();
         Response response = printerResponseFactory.readResponse();
-        if (response instanceof PrinterStatus) {
-            return (PrinterStatus)response;
+        if (response instanceof PrinterStatusResponse) {
+            return (PrinterStatusResponse)response;
         }
 
         throw new UnexpectedPrinterResponse(response);

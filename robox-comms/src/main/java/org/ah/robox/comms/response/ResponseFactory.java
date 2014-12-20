@@ -45,7 +45,7 @@ public class ResponseFactory {
         if (r < 0) { r = 256 + r; }
 
         if (r == PRINTER_STATUS_RESPONSE) {
-            response = new PrinterStatus();
+            response = new PrinterStatusResponse();
             buffer = new byte[165];
             ptr = 0;
             readBuffer(in, buffer);

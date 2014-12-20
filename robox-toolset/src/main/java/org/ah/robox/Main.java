@@ -58,6 +58,9 @@ public class Main {
             } else if ("status".equals(arg)) {
                 command = "status";
                 furtherArgsFlag = true;
+            } else if ("upload".equals(arg)) {
+                command = "upload";
+                furtherArgsFlag = true;
             } else if ("pause".equals(arg)) {
                 command = "pause";
                 furtherArgsFlag = true;
@@ -66,6 +69,9 @@ public class Main {
                 furtherArgsFlag = true;
             } else if ("abort".equals(arg)) {
                 command = "abort";
+                furtherArgsFlag = true;
+            } else if ("web".equals(arg)) {
+                command = "web";
                 furtherArgsFlag = true;
             } else {
                 System.err.println("Unknown option: '" + arg + "'");
@@ -78,12 +84,22 @@ public class Main {
             printHelp();
             System.exit(0);
         } else {
-
             SerialPortsPrinterDiscovery discovery = new SerialPortsPrinterDiscovery();
-            List<PrinterChannel> printerChannels = discovery.findPrinters();
+            discovery.setVerbose(verboseFlag);
+            discovery.setDebug(debugFlag);
+
+            List<PrinterChannel> printerChannels = null;
+            if (!"upload".equals(command) && !"web".equals(command)) {
+                printerChannels = discovery.findAllPrinters();
+            }
 
             if ("list".equals(command)) {
                 ListCommand.execute(printerChannels);
+            } else if ("upload".equals(command)) {
+                UploadCommand.execute(furtherArgs);
+            } else if ("web".equals(command)) {
+                WebCommand.execute(discovery, printerId, furtherArgs);
+                //UploadCommand.execute(furtherArgs);
             } else {
                 PrinterChannel selectedChannel = null;
 
@@ -129,7 +145,7 @@ public class Main {
                     } else if ("resume".equals(command)) {
                         ResumePrinterCommand.execute(selectedChannel, furtherArgs);
                     } else if ("abort".equals(command)) {
-                        ResumePrinterCommand.execute(selectedChannel, furtherArgs);
+                        AbortPrintCommand.execute(selectedChannel, furtherArgs);
                     }
                 } finally {
                     selectedChannel.close();
@@ -168,6 +184,7 @@ public class Main {
         System.out.println("  pause    - pauses current print if there's one");
         System.out.println("  resume   - resumes current print if there's one");
         System.out.println("  abort    - aborts current print if there's one");
+        System.out.println("  upload   - sets print file for status command");
         System.out.println("");
         System.out.println("  Tip: further help can be obtained if '-h'/'-?'/'--help; is specified");
         System.out.println("  after commmand. Example: ");

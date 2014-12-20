@@ -21,6 +21,6 @@ import java.util.List;
  */
 public interface PrinterDiscovery {
 
-    List<PrinterChannel> findPrinters() throws IOException;
+    List<PrinterChannel> findAllPrinters() throws IOException;
 
 }

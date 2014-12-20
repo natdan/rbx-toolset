@@ -24,20 +24,26 @@ import java.io.OutputStream;
  */
 public class SerialPortPrinterChannel implements PrinterChannel {
 
+    private SerialPortsPrinterDiscovery parent;
     private String printerDeviceId;
     private String printerPath;
     private SerialPort serialPort;
     private InputStream in;
     private OutputStream out;
 
-    public SerialPortPrinterChannel(String deviceId, String printerPath, SerialPort serialPort) throws IOException {
-        this.printerDeviceId = deviceId;
+    public SerialPortPrinterChannel(SerialPortsPrinterDiscovery parent, String printerPath, SerialPort serialPort) throws IOException {
+        this.parent = parent;
         this.printerPath = printerPath;
         this.serialPort = serialPort;
 
         in = serialPort.getInputStream();
         out = serialPort.getOutputStream();
     }
+
+    public void updateDeviceId() {
+        printerDeviceId = printerPath; // TODO
+    }
+
 
     public String getPrinterDeviceId() {
         return printerDeviceId;
@@ -60,6 +66,7 @@ public class SerialPortPrinterChannel implements PrinterChannel {
         try { in.close(); } catch (Exception ignore) {}
         try { out.close(); } catch (Exception ignore) {}
         serialPort.close();
+        parent.closed(this);
     }
 
 }
