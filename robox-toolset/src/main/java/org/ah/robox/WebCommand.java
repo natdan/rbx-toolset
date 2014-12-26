@@ -13,6 +13,13 @@
 package org.ah.robox;
 
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.List;
 
 import org.ah.robox.comms.PrinterDiscovery;
@@ -36,6 +43,9 @@ public class WebCommand {
         boolean templateFileFlag = false;
         boolean refreshCommandFormatFlag = false;
         boolean automaticRefrehsFlag = false;
+        boolean startFlag = false;
+        boolean stopFlag = false;
+        boolean statusFlag = false;
 
         WebServer webServer = new WebServer(printerDiscovery);
         String templateFileName = null;
@@ -122,6 +132,24 @@ public class WebCommand {
                 staticDirFlag = true;
             } else if ("-ar".equals(a) || "--automatic-refresh".equals(a)) {
                 automaticRefrehsFlag = true;
+            } else if ("start".equals(a)) {
+                if (statusFlag || stopFlag) {
+                    System.err.println("start/stop/status are mutually exclusive commands. Supply only one at the time.");
+                    System.exit(1);
+                }
+                startFlag = true;
+            } else if ("stop".equals(a)) {
+                if (statusFlag || startFlag) {
+                    System.err.println("start/stop/status are mutually exclusive commands. Supply only one at the time.");
+                    System.exit(1);
+                }
+                stopFlag = true;
+            } else if ("status".equals(a)) {
+                if (startFlag || stopFlag) {
+                    System.err.println("start/stop/status are mutually exclusive commands. Supply only one at the time.");
+                    System.exit(1);
+                }
+                statusFlag = true;
             } else {
                 System.err.println("Unknown option: '" + a + "'");
                 printHelp();
@@ -167,18 +195,218 @@ public class WebCommand {
 
         // Printer printer = new RoboxPrinter(selectedChannel);
 
-        webServer.setPreferredPrinterId(printerId);
-        webServer.init();
-        webServer.start();
+        boolean error = false;
+        if (statusFlag) {
+            doStatus();
+        } else if (stopFlag) {
+            doStopWebServer();
+        } else if (startFlag) {
+            doStartWebServerInSeparateProcess();
+        } else {
+            ServerSocket serverSocket = new ServerSocket(0);
+            try {
+                int port = serverSocket.getLocalPort();
+                serverSocket.setSoTimeout(500);
 
-        System.out.println("Started web server at " + webServer.getAddress());
-        while (true) {
-            Thread.sleep(1000);
+                webServer.setPreferredPrinterId(printerId);
+                webServer.init();
+                webServer.start();
+
+                File portFile = serverPortFile();
+                if (portFile.exists()) {
+                    if (!portFile.delete()) {
+                        System.err.println("Cannot delete lock file " + portFile.getAbsolutePath());
+                        System.exit(-1);
+                    }
+                }
+
+                try {
+                    FileWriter fw = new FileWriter(portFile);
+                    try {
+                        fw.write(Integer.toString(port));
+                    } finally {
+                        fw.close();
+                    }
+
+                    System.out.println("Started web server at " + webServer.getAddress());
+                    boolean stop = false;
+                    while (!stop) {
+                        try {
+                            Socket socket = serverSocket.accept();
+                            try {
+                                byte[] buf = new byte[4];
+                                int r = socket.getInputStream().read(buf);
+                                if (r == 4) {
+                                    if ("PING".equals(new String(buf, "US-ASCII"))) {
+                                        socket.getOutputStream().write("PONG\n".getBytes("US-ASCII"));
+                                    } else if ("STOP".equals(new String(buf, "US-ASCII"))) {
+                                        stop = true;
+                                        webServer.stopAndWaitForStopped();
+                                        socket.getOutputStream().write("OK\n".getBytes("US-ASCII"));
+                                    }
+                                }
+                            } finally {
+                                socket.close();
+                            }
+                        } catch (SocketTimeoutException ignore) {
+                        } catch (Exception ignore) {
+                            error = true;
+                        }
+                    }
+                } catch (Exception e) {
+                    System.err.println("Cannot create lock file " + portFile.getAbsolutePath());
+                    error = true;
+                }
+            } finally {
+                serverSocket.close();
+            }
+        }
+
+        if (error) {
+            System.exit(-1);
+        } else {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException ignore) { }
+            System.exit(0);
+        }
+    }
+
+    private static File serverPortFile() {
+        File configDir = new File(new File(System.getProperty("user.home")), ".robox");
+        File serverPort = new File(configDir, ".port");
+        return serverPort;
+    }
+
+    private static int getPortNumber() {
+        int port = -1;
+        File serverPort = serverPortFile();
+        if (serverPort.exists()) {
+            try {
+                char[] portNumberChars = new char[(int)serverPort.length()];
+                FileReader fr = new FileReader(serverPort);
+                try {
+                    fr.read(portNumberChars);
+                } finally {
+                    fr.close();
+                }
+                try {
+                    port = Integer.parseInt(new String(portNumberChars));
+                } catch (NumberFormatException e) { }
+            } catch (Throwable ignore) { }
+        }
+        return port;
+    }
+
+    /**
+     *
+     */
+    private static void doStatus() {
+        boolean error = true;
+        int port = getPortNumber();
+        if (port > 0) {
+            try {
+                Socket socket = new Socket("127.0.0.1", port);
+                try {
+                    socket.setSoTimeout(5000);
+                    try {
+                        socket.getOutputStream().write("PING".getBytes("US-ASCII"));
+                        socket.getOutputStream().flush();
+                        try {
+                            byte[] response = new byte[5];
+                            int r = socket.getInputStream().read(response);
+                            if (r == 5 && "PONG\n".equals(new String(response, "US-ASCII"))) {
+                                System.out.println("Server is working.");
+                                error = false;
+                            } else {
+                                System.err.println("Server appears to be working but got wrong response.");
+                            }
+                        } catch (Exception e) {
+                            System.err.println("Server appears to be working but doesn't respond to stop requests.");
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Server appears to be working but cannot contact it.");
+                    }
+                } finally {
+                    socket.close();
+                }
+            } catch (Exception e) {
+                System.err.println("Server seems not to be working. Deleting stale port lock file.");
+                File f = serverPortFile();
+                if (f.exists()) {
+                    f.delete();
+                }
+            }
+        } else {
+            System.err.println("Server is not working.");
+        }
+        if (error) {
+            System.exit(-1);
+        }
+    }
+
+    /**
+     *
+     */
+    private static void doStartWebServerInSeparateProcess() {
+        RuntimeMXBean runtimeMxBean = ManagementFactory.getRuntimeMXBean();
+        System.out.println("ARGS: " + runtimeMxBean.getInputArguments());
+        System.out.println("Command: " + System.getProperty("sun.java.command"));
+        System.out.println("x: " + ManagementFactory.getRuntimeMXBean().getName());
+
+        System.err.println("This function is still not implemented.");
+        System.exit(-1);
+    }
+
+    /**
+     *
+     */
+    private static void doStopWebServer() {
+        boolean error = true;
+        int port = getPortNumber();
+        if (port > 0) {
+            try {
+                Socket socket = new Socket("127.0.0.1", port);
+                try {
+                    socket.setSoTimeout(5000);
+                    try {
+                        socket.getOutputStream().write("STOP".getBytes("US-ASCII"));
+                        socket.getOutputStream().flush();
+                        try {
+                            byte[] response = new byte[3];
+                            int r = socket.getInputStream().read(response);
+                            if (r == 3 && "OK\n".equals(new String(response, "US-ASCII"))) {
+                                System.out.println("Server confirmed it stopped.");
+                                error = false;
+                            } else {
+                                System.err.println("Server appears to be working but got wrong response.");
+                            }
+                        } catch (Exception e) {
+                            System.err.println("Server appears to be working but doesn't respond to stop requests.");
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Server appears to be working but cannot contact it.");
+                    }
+                } finally {
+                    socket.close();
+                }
+            } catch (Exception e) {
+                System.err.println("Server seems not to be working");
+                File f = serverPortFile();
+                if (f.exists()) {
+                    f.delete();
+                }
+            }
+        } else {
+            System.err.println("Cannot find port lock file. Server appears not to be working.");
+        }
+        if (error) {
+            System.exit(-1);
         }
     }
 
     public static void printHelp() {
-        System.out.println("Usage: rbx [<general-options>] web [<specific-options>]");
+        System.out.println("Usage: rbx [<general-options>] web [<specific-options>] [<command>]");
         System.out.println("");
         Main.printGeneralOptions();
         System.out.println("");
@@ -220,6 +448,13 @@ public class WebCommand {
         System.out.println("  -ar | --automatic-refresh <value-in-seconds>");
         System.out.println("        Enables internal template to create html page refresh. External templates");
         System.out.println("        can utilise it by adding ${automatic-refresh} placeholder in html head part.");
+        System.out.println("");
+        System.out.println("Commands are optional. If none specified then web server will start in current process.");
+        System.out.println("");
+        System.out.println("  start  - starts the server in background. Not implemented yet.");
+        System.out.println("  status - displays status of the server.");
+        System.out.println("  stop   - stops the server.");
+        System.out.println("");
         System.out.println("");
         System.out.println("Template file should have following placeholders:");
         System.out.println("");

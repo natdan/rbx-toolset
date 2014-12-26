@@ -22,6 +22,8 @@ import java.net.InetSocketAddress;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 import org.ah.robox.ExtendedPrinterStatus;
 import org.ah.robox.Main;
@@ -55,6 +57,8 @@ public class WebServer {
     private boolean allowCommandsFlag = false;
     private PrinterDiscovery printerDiscovery;
     private int automaticRefresh = -1;
+    private StatusManager statusManager;
+    private ImageCache imageCache;
 
     public WebServer(PrinterDiscovery printerDiscovery) {
         this.printerDiscovery = printerDiscovery;
@@ -62,7 +66,7 @@ public class WebServer {
 
     public void init() throws IOException {
 
-        final StatusManager statusManager = new StatusManager(printerDiscovery, preferredPrinterId);
+        statusManager = new StatusManager(printerDiscovery, preferredPrinterId);
         statusManager.setInterval(refreshInterval);
         statusManager.setPostRefreshCommand(postRefreshCommand);
         if (refreshCommandFormat != null) {
@@ -70,10 +74,10 @@ public class WebServer {
         }
         statusManager.start();
 
-        ImageCache image = imageCommand != null ? new ImageCache() : null;
-        if (image != null) {
-            image.setInterval(imageRefreshInterval);
-            image.setImageCommand(imageCommand);
+        imageCache = imageCommand != null ? new ImageCache() : null;
+        if (imageCache != null) {
+            imageCache.setInterval(imageRefreshInterval);
+            imageCache.setImageCommand(imageCommand);
         }
 
         InetSocketAddress address = new InetSocketAddress(port);
@@ -89,13 +93,40 @@ public class WebServer {
         }
 
         // TODO add other templates
-        WebServer.MainHandler mainHandler = new WebServer.MainHandler(statusManager, templateFile, null, null, null, image, staticFiles);
+        WebServer.MainHandler mainHandler = new WebServer.MainHandler(statusManager, templateFile, null, null, null, imageCache, staticFiles);
         server.createContext("/", mainHandler);
-        server.setExecutor(null); // creates a default executor
+        server.setExecutor(Executors.newCachedThreadPool(new ThreadFactory() {
+            public Thread newThread(Runnable runnable) {
+                Thread thread = new Thread(runnable);
+                thread.setDaemon(true);
+                return thread;
+            }
+        }));
     }
 
     public void start() throws IOException {
         server.start();
+    }
+
+    public void stop() throws IOException {
+        imageCache.stop();
+        statusManager.stop();
+    }
+
+    /**
+     *
+     */
+    public void stopAndWaitForStopped() throws IOException {
+        stop();
+
+        long now = System.currentTimeMillis();
+        server.stop(3);
+        while ((System.currentTimeMillis() - now < 3500)
+                && (imageCache.isRunning() || statusManager.isRunning())) {
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException ignore) { }
+        }
     }
 
     public int getRefreshInterval() {

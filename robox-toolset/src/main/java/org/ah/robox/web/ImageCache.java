@@ -30,6 +30,7 @@ public class ImageCache {
     private long lastInvoked;
     private int interval = 5;
     private boolean run = true;
+    private boolean running = false;
     private String imageCommand;
     private byte[] image;
     private String lastError;
@@ -47,51 +48,60 @@ public class ImageCache {
      * @param imageCommand2
      */
     private synchronized byte[] readImageCommand(String imageCommand) {
-        try {
-            Process process = Runtime.getRuntime().exec(imageCommand);
-            InputStream es = process.getErrorStream();
-            InputStream is = process.getInputStream();
-            ByteArrayOutputStream buf = new ByteArrayOutputStream();
-            byte[] buffer = new byte[10240];
+        if (run) {
+            running = true;
+            try {
+                Process process = Runtime.getRuntime().exec(imageCommand);
+                InputStream es = process.getErrorStream();
+                InputStream is = process.getInputStream();
+                ByteArrayOutputStream buf = new ByteArrayOutputStream();
+                byte[] buffer = new byte[10240];
 
-            int r = is.read(buffer);
-            while (r > 0) {
-                buf.write(buffer, 0, r);
-                r = is.read(buffer);
-            }
-            is.close();
+                int r = is.read(buffer);
+                while (r > 0) {
+                    buf.write(buffer, 0, r);
+                    r = is.read(buffer);
+                }
+                is.close();
 
-            ByteArrayOutputStream err = new ByteArrayOutputStream();
+                ByteArrayOutputStream err = new ByteArrayOutputStream();
 
-            r = es.read(buffer);
-            while (r > 0) {
-                buf.write(buffer, 0, r);
                 r = es.read(buffer);
-            }
-            es.close();
+                while (r > 0) {
+                    buf.write(buffer, 0, r);
+                    r = es.read(buffer);
+                }
+                es.close();
 
-            byte[] errBytes = err.toByteArray();
-            if (errBytes.length > 0) {
-                lastError = new String(errBytes, "US-ASCII");
-            }
+                byte[] errBytes = err.toByteArray();
+                if (errBytes.length > 0) {
+                    lastError = new String(errBytes, "US-ASCII");
+                }
 
-            return buf.toByteArray();
-        } catch (IOException e) {
-            if (Main.debugFlag) {
-                e.printStackTrace(System.err);
-            } else if (Main.verboseFlag) {
-                System.err.println(e.getMessage());
+                return buf.toByteArray();
+            } catch (IOException e) {
+                if (Main.debugFlag) {
+                    e.printStackTrace(System.err);
+                } else if (Main.verboseFlag) {
+                    System.err.println(e.getMessage());
+                }
+                StringWriter err = new StringWriter();
+                PrintWriter printWriter = new PrintWriter(err);
+                e.printStackTrace(printWriter);
+                lastError = err.toString();
+            } finally {
+                running = false;
             }
-            StringWriter err = new StringWriter();
-            PrintWriter printWriter = new PrintWriter(err);
-            e.printStackTrace(printWriter);
-            lastError = err.toString();
         }
         return null;
     }
 
     public void stop() {
         run = false;
+    }
+
+    public boolean isRunning() {
+        return run || running;
     }
 
     public long getLastInvoked() {
@@ -104,10 +114,6 @@ public class ImageCache {
 
     public void setInterval(int interval) {
         this.interval = interval;
-    }
-
-    public boolean isRunnable() {
-        return run;
     }
 
     public String getImageCommand() {

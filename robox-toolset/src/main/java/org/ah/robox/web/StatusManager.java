@@ -39,6 +39,7 @@ public class StatusManager implements Runnable {
     private long lastInvoked;
     private int interval = 15;
     private boolean run = true;
+    private boolean running = false;
     private String postRefreshCommand;
     private String param;
     private String format = "%c: %h:%m:%s";
@@ -72,7 +73,8 @@ public class StatusManager implements Runnable {
             }
             while (run) {
                 try {
-                    if (run) {
+                    running = true;
+                    try {
                         updatePrinters();
 
                         Set<String> knownButNotPresentPrinterIds = new HashSet<String>(statuses.keySet());
@@ -131,13 +133,17 @@ public class StatusManager implements Runnable {
                             ExtendedPrinterStatus status = statuses.get(knowPrinterId);
                             status.setPrinterStatus(null);
                         }
-                    }
-                    if (Main.debugFlag) {
-                        System.out.println("Printer status waiting for " + (interval * 1000));
+                    } finally {
+                        running = false;
                     }
 
-                    Thread.sleep(interval * 1000);
-                    lastInvoked = System.currentTimeMillis();
+                    if (run) {
+                        if (Main.debugFlag) {
+                            System.out.println("Printer status waiting for " + (interval * 1000));
+                        }
+                        Thread.sleep(interval * 1000);
+                        lastInvoked = System.currentTimeMillis();
+                    }
                 } catch (InterruptedException e) {
                 }
             }
@@ -259,7 +265,7 @@ public class StatusManager implements Runnable {
     }
 
     public boolean isRunning() {
-        return run;
+        return run || running;
     }
 
     public String getPostRefreshCommand() {
