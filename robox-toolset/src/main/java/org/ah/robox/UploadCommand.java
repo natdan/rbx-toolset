@@ -44,6 +44,9 @@ public class UploadCommand {
                 fileFlag = true;
             } else if ("-i".equals(a) || "--job-id".equals(a)) {
                 jobIdFlag = true;
+            } else if ("-h".equals(a) || "--help".equals(a) || "-?".equals(a)) {
+                printHelp();
+                System.exit(0);
             } else {
                 System.err.println("Unknown option: '" + a + "'");
                 printHelp();
@@ -89,11 +92,12 @@ public class UploadCommand {
     public static void printHelp() {
         System.out.println("Usage: rbx [<general-options>] update [<specific-options>]");
         System.out.println("");
-        Main.printGeneralOptions();
+        System.out.println("  General options are one of these:");
+        System.out.println("  -v | --verbose   - increases voutput erbosity level");
+        System.out.println("  -d | --debug     - increases debug level");
         System.out.println("");
         Main.printSpecificOptions();
         System.out.println("");
-        System.out.println("  -h | --help | -?     - this page");
         System.out.println("  -f | --file          - gcode file needed for estimate");
         System.out.println("  -i | --job-id        - job id");
         System.out.println("");

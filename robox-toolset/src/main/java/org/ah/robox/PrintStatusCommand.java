@@ -57,6 +57,9 @@ public class PrintStatusCommand {
                 currentLineFlag = true;
             } else if ("-tl".equals(a) || "--total-lines".equals(a)) {
                 totalLineFlag = true;
+            } else if ("-h".equals(a) || "--help".equals(a) || "-?".equals(a)) {
+                printHelp();
+                System.exit(0);
             } else {
                 System.err.println("Unknown option: '" + a + "'");
                 printHelp();

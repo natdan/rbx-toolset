@@ -28,6 +28,7 @@ public class AbortPrintCommand {
         for (String a : args) {
             if ("-?".equals(a) || "-h".equals(a) || "--help".equals(a)) {
                 printHelp();
+                System.exit(0);
             } else {
                 System.err.println("Unknown option: '" + a + "'");
                 printHelp();

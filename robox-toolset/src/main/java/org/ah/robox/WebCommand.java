@@ -150,6 +150,9 @@ public class WebCommand {
                     System.exit(1);
                 }
                 statusFlag = true;
+            } else if ("-h".equals(a) || "--help".equals(a) || "-?".equals(a)) {
+                printHelp();
+                System.exit(0);
             } else {
                 System.err.println("Unknown option: '" + a + "'");
                 printHelp();
@@ -408,7 +411,9 @@ public class WebCommand {
     public static void printHelp() {
         System.out.println("Usage: rbx [<general-options>] web [<specific-options>] [<command>]");
         System.out.println("");
-        Main.printGeneralOptions();
+        System.out.println("  General options are one of these:");
+        System.out.println("  -v | --verbose   - increases voutput erbosity level");
+        System.out.println("  -d | --debug     - increases debug level");
         System.out.println("");
         Main.printSpecificOptions();
         System.out.println("");

@@ -102,14 +102,15 @@ public class Main {
                 //UploadCommand.execute(furtherArgs);
             } else {
                 Printer selectedPrinter = null;
+                boolean helpInvocation = furtherArgs.contains("-h") || furtherArgs.contains("--help") || furtherArgs.contains("-?");
 
                 if (printerId == null) {
                     if (printers.size() == 1) {
                         selectedPrinter = printers.get(0);
-                    } else if (printers.size() == 0) {
+                    } else if (printers.size() == 0 && !helpInvocation) {
                         System.err.println("There are not detected printers.");
                         System.exit(1);
-                    } else {
+                    } else if (!helpInvocation) {
                         System.err.println("There are more detected printers:");
                         int i = 1;
                         for (Printer printer : printers) {
@@ -149,7 +150,9 @@ public class Main {
                         AbortPrintCommand.execute(selectedPrinter, furtherArgs);
                     }
                 } finally {
-                    selectedPrinter.close();
+                    if (selectedPrinter != null) {
+                        selectedPrinter.close();
+                    }
                 }
             }
         }
