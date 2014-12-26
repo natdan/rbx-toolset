@@ -12,22 +12,50 @@
  *******************************************************************************/
 package org.ah.robox.comms.response;
 
+
 /**
 *
 * @author Daniel Sendula
 */
-public class PrinterIdResponse implements Response {
+public class PrinterDetailsResponse implements Response {
 
+    private String model;
+    private String serialNumber;
     private String printerId;
+    private String colour;
 
-    public PrinterIdResponse() {
+    public PrinterDetailsResponse() {
     }
 
-    public String getPrinterId() {
+    public String getPrinterName() {
         return printerId;
     }
 
     public void setPrinterId(String printerId) {
         this.printerId = printerId;
+    }
+
+    public String getModel() {
+        return model;
+    }
+
+    public void setModel(String model) {
+        this.model = model;
+    }
+
+    public String getSerialNumber() {
+        return serialNumber;
+    }
+
+    public void setSerialNumber(String serialNumber) {
+        this.serialNumber = serialNumber;
+    }
+
+    public String getColour() {
+        return colour;
+    }
+
+    public void setColour(String colour) {
+        this.colour = colour;
     }
 }

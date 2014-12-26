@@ -125,7 +125,7 @@ public class UploadCommand {
         System.out.println("<jobid>.estimate file is created.");
     }
 
-    private static void createLinesFile(String printJob, int numberOfLines) throws IOException {
+    public static void createLinesFile(String printJob, int numberOfLines) throws IOException {
         File configDir = ensureConfigDir();
         File linesFile = new File(configDir, printJob + ".lines");
         if (!linesFile.exists()) {

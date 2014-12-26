@@ -21,8 +21,6 @@ import java.io.OutputStream;
  */
 public interface PrinterChannel {
 
-    String getPrinterDeviceId();
-
     String getPrinterPath();
 
     InputStream getInputStream();

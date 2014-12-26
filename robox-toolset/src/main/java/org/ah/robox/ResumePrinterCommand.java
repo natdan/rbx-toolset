@@ -15,8 +15,6 @@ package org.ah.robox;
 import java.util.List;
 
 import org.ah.robox.comms.Printer;
-import org.ah.robox.comms.PrinterChannel;
-import org.ah.robox.comms.RoboxPrinter;
 import org.ah.robox.comms.response.StandardResponse;
 
 /**
@@ -26,7 +24,7 @@ import org.ah.robox.comms.response.StandardResponse;
  */
 public class ResumePrinterCommand {
 
-    public static void execute(PrinterChannel selectedChannel, List<String> args) throws Exception {
+    public static void execute(Printer printer, List<String> args) throws Exception {
         for (String a : args) {
             if ("-?".equals(a) || "-h".equals(a) || "--help".equals(a)) {
                 printHelp();
@@ -36,8 +34,6 @@ public class ResumePrinterCommand {
                 System.exit(1);
             }
         }
-
-        Printer printer = new RoboxPrinter(selectedChannel);
 
         StandardResponse response = printer.resumePrinter();
         Main.processStandardResponse(response);

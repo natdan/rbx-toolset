@@ -25,6 +25,14 @@ public interface Printer {
 
     void close();
 
+    String getPrinterId();
+
+    String getPrinterName();
+
+    String getModel();
+
+    String getSerialNumber();
+
     PrinterChannel getPrinterChannel();
 
     PrinterStatusResponse getPrinterStatus() throws IOException;

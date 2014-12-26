@@ -23,8 +23,9 @@ public class RequestFactory {
 
     public static int PRINTER_PAUSE_RESUME_COMMAND = 0x98;
     public static int PRINTER_STATUS_REQ_COMMAND = 0xb0;
+    public static int GET_PRINTER_DETAILS = 0xb2;
+    public static int WRITE_PRINTER_DETAILS = 0xc1;
     public static int ABORT_PRINT_COMMAND = 0xff;
-    public static int READ_PRINTER_ID_COMMAND = 0xb2;
 
     private OutputStream out;
 
@@ -58,6 +59,13 @@ public class RequestFactory {
     public void sendPrinterAbortPrint() throws IOException {
         byte[] buffer = new byte[1];
         buffer[0] = (byte)ABORT_PRINT_COMMAND;
+        out.write(buffer, 0, 1);
+        out.flush();
+    }
+
+    public void sendGetPrinterDetails() throws IOException {
+        byte[] buffer = new byte[1];
+        buffer[0] = (byte)GET_PRINTER_DETAILS;
         out.write(buffer, 0, 1);
         out.flush();
     }

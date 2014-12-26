@@ -41,6 +41,7 @@ public class SerialPortsPrinterDiscovery implements PrinterDiscovery {
     private boolean verbose = false;
     private boolean debug = false;
     private Map<String, SerialPortPrinterChannel> channels = new HashMap<String, SerialPortPrinterChannel>();
+    private Map<PrinterChannel, Printer> printers = new HashMap<PrinterChannel, Printer>();
 
     protected void closed(SerialPortPrinterChannel channel) {
         channels.remove(channel);
@@ -58,7 +59,7 @@ public class SerialPortsPrinterDiscovery implements PrinterDiscovery {
     public SerialPortsPrinterDiscovery() {
     }
 
-    public List<PrinterChannel> findAllPrinters() throws IOException {
+    public List<PrinterChannel> findAllPrinterChannels() throws IOException {
         List<PrinterChannel> printerChannels = new ArrayList<PrinterChannel>();
 
         File devSerialById = null;
@@ -120,7 +121,6 @@ public class SerialPortsPrinterDiscovery implements PrinterDiscovery {
 
 
                                     SerialPortPrinterChannel printerChannel = new SerialPortPrinterChannel(this, devName, serialPort);
-                                    printerChannel.updateDeviceId();
 
                                     channels.put(devName, printerChannel);
                                     printerChannels.add(printerChannel);
@@ -155,6 +155,26 @@ public class SerialPortsPrinterDiscovery implements PrinterDiscovery {
             }
         }
         return printerChannels;
+    }
+
+    public List<Printer> findAllPrinters() throws IOException {
+        List<Printer> resultPrinters = new ArrayList<Printer>();
+        List<PrinterChannel> channels = findAllPrinterChannels();
+        for (PrinterChannel channel : channels) {
+            Printer printer = getPrinterForChannel(channel);
+            printers.put(channel, printer);
+            resultPrinters.add(printer);
+        }
+        return resultPrinters;
+    }
+
+    public Printer getPrinterForChannel(PrinterChannel printerChannel) {
+        Printer printer = printers.get(printerChannel);
+        if (printer == null) {
+            printer = new RoboxPrinter(printerChannel);
+            printers.put(printerChannel, printer);
+        }
+        return printer;
     }
 
 }

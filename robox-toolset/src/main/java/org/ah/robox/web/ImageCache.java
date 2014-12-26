@@ -25,7 +25,7 @@ import org.ah.robox.Main;
  *
  * @author Daniel Sendula
  */
-public class Image {
+public class ImageCache {
 
     private long lastInvoked;
     private int interval = 5;

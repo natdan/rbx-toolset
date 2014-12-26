@@ -1,0 +1,61 @@
+<html>
+<head>
+  <title>Print status - No Printers Detected</title>
+  <style type="text/css">
+
+body, td {
+  font-family: "Arial", "sans-serif";
+}
+
+.container {
+  width: 90%;
+  margin: 12px;
+}
+.first {
+  float: left;
+  margin: 2px;
+}
+.last {
+  float: right;
+  margin: 2px;
+}
+.adjust {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  margin: 2px;
+}
+.while-center {
+  margin-left: auto;
+  margin-right: auto;
+}
+table {
+  border-collapse: collapse;
+}
+table, th, td {
+   border: 0px;
+}
+.clear { clear: both; }
+.estimate {
+  font-size: 200%;
+}
+h1:after, h2:after
+{
+    content: ' ';
+    display: block;
+    border: 2px solid black;
+}
+.captureParagraph { display: ${capture_image_css_display}; }
+.commandsParagraph { display: ${commands_css_display}; }
+.errorMsg { color: #AA0000; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="last"><div class="errorMsg">${error_msg}</div></div>
+  </div>
+  <h1>Robox Status</h1>
+  <div class="errorMsg">No printers detected.</div>
+</body>
+</html>
+

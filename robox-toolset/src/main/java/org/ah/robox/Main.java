@@ -15,7 +15,7 @@ package org.ah.robox;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.ah.robox.comms.PrinterChannel;
+import org.ah.robox.comms.Printer;
 import org.ah.robox.comms.SerialPortsPrinterDiscovery;
 import org.ah.robox.comms.response.ResponseFactory;
 import org.ah.robox.comms.response.StandardResponse;
@@ -88,48 +88,49 @@ public class Main {
             discovery.setVerbose(verboseFlag);
             discovery.setDebug(debugFlag);
 
-            List<PrinterChannel> printerChannels = null;
+            List<Printer> printers = null;
             if (!"upload".equals(command) && !"web".equals(command)) {
-                printerChannels = discovery.findAllPrinters();
+                printers = discovery.findAllPrinters();
             }
 
             if ("list".equals(command)) {
-                ListCommand.execute(printerChannels);
+                ListCommand.execute(printers);
             } else if ("upload".equals(command)) {
                 UploadCommand.execute(furtherArgs);
             } else if ("web".equals(command)) {
                 WebCommand.execute(discovery, printerId, furtherArgs);
                 //UploadCommand.execute(furtherArgs);
             } else {
-                PrinterChannel selectedChannel = null;
+                Printer selectedPrinter = null;
 
                 if (printerId == null) {
-                    if (printerChannels.size() == 1) {
-                        selectedChannel = printerChannels.get(0);
-                    } else if (printerChannels.size() == 0) {
+                    if (printers.size() == 1) {
+                        selectedPrinter = printers.get(0);
+                    } else if (printers.size() == 0) {
                         System.err.println("There are not detected printers.");
                         System.exit(1);
                     } else {
                         System.err.println("There are more detected printers:");
                         int i = 1;
-                        for (PrinterChannel channel : printerChannels) {
-                            channel.close();
-                            System.err.println("    " + i + ":" + channel.getPrinterDeviceId());
+                        for (Printer printer : printers) {
+                            printer.close();
+                            System.err.println("    " + i + ":" + printer.getPrinterName());
                             i++;
                         }
                         System.err.println("This tool currently doesn't support multiple printers.");
                         System.exit(1);
                     }
                 } else {
-                    for (PrinterChannel printerChannel : printerChannels) {
-                        if (printerId.equalsIgnoreCase(printerChannel.getPrinterDeviceId())
-                                || printerId.equalsIgnoreCase(printerChannel.getPrinterPath())) {
-                            selectedChannel = printerChannel;
+                    for (Printer printer : printers) {
+                        if (printerId.equalsIgnoreCase(printer.getPrinterId())
+                                || printerId.equalsIgnoreCase(printer.getPrinterChannel().getPrinterPath())
+                                || printerId.equalsIgnoreCase(printer.getPrinterName())) {
+                            selectedPrinter = printer;
                         } else {
-                            printerChannel.close();
+                            printer.close();
                         }
                     }
-                    if (selectedChannel == null) {
+                    if (selectedPrinter == null) {
                         System.err.println("No printer with id or path '" + printerId + "' detected. Try list command.");
                         System.exit(1);
                     }
@@ -139,16 +140,16 @@ public class Main {
 
                 try {
                     if ("status".equals(command)) {
-                        PrintStatusCommand.execute(selectedChannel, furtherArgs);
+                        PrintStatusCommand.execute(selectedPrinter, furtherArgs);
                     } else if ("pause".equals(command)) {
-                        PausePrinterCommand.execute(selectedChannel, furtherArgs);
+                        PausePrinterCommand.execute(selectedPrinter, furtherArgs);
                     } else if ("resume".equals(command)) {
-                        ResumePrinterCommand.execute(selectedChannel, furtherArgs);
+                        ResumePrinterCommand.execute(selectedPrinter, furtherArgs);
                     } else if ("abort".equals(command)) {
-                        AbortPrintCommand.execute(selectedChannel, furtherArgs);
+                        AbortPrintCommand.execute(selectedPrinter, furtherArgs);
                     }
                 } finally {
-                    selectedChannel.close();
+                    selectedPrinter.close();
                 }
             }
         }

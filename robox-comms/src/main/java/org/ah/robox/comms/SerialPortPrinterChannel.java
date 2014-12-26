@@ -25,7 +25,6 @@ import java.io.OutputStream;
 public class SerialPortPrinterChannel implements PrinterChannel {
 
     private SerialPortsPrinterDiscovery parent;
-    private String printerDeviceId;
     private String printerPath;
     private SerialPort serialPort;
     private InputStream in;
@@ -38,15 +37,6 @@ public class SerialPortPrinterChannel implements PrinterChannel {
 
         in = serialPort.getInputStream();
         out = serialPort.getOutputStream();
-    }
-
-    public void updateDeviceId() {
-        printerDeviceId = printerPath; // TODO
-    }
-
-
-    public String getPrinterDeviceId() {
-        return printerDeviceId;
     }
 
     public String getPrinterPath() {

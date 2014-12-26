@@ -10,20 +10,37 @@
  *
  *
  *******************************************************************************/
-package org.ah.robox.comms;
+package org.ah.robox.toolset;
 
-import java.io.IOException;
-import java.util.List;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import org.ah.robox.comms.PrinterChannel;
 
 /**
  *
+ *
  * @author Daniel Sendula
  */
-public interface PrinterDiscovery {
+public class DummyTestPrinterChannel implements PrinterChannel {
 
-    List<PrinterChannel> findAllPrinterChannels() throws IOException;
+    public String getPrinterDeviceId() {
+        return "dummy-robox";
+    }
 
-    List<Printer> findAllPrinters() throws IOException;
+    public String getPrinterPath() {
+        return "/dev/dummy-robox";
+    }
 
-    Printer getPrinterForChannel(PrinterChannel printerChannel);
+    public InputStream getInputStream() {
+        return null;
+    }
+
+    public OutputStream getOutputStream() {
+        return null;
+    }
+
+    public void close() {
+    }
+
 }

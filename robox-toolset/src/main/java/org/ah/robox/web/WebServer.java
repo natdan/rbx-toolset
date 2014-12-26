@@ -16,15 +16,18 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.InetSocketAddress;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.ah.robox.ExtendedPrinterStatus;
 import org.ah.robox.Main;
-import org.ah.robox.PrintStatusCommand.Estimate;
-import org.ah.robox.PrintStatusCommand.EstimateState;
-import org.ah.robox.WebCommand;
+import org.ah.robox.comms.Printer;
 import org.ah.robox.comms.PrinterDiscovery;
-import org.ah.robox.comms.response.PrinterStatusResponse;
+import org.ah.robox.web.UploadFile.Result;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -51,6 +54,7 @@ public class WebServer {
     private HttpServer server;
     private boolean allowCommandsFlag = false;
     private PrinterDiscovery printerDiscovery;
+    private int automaticRefresh = -1;
 
     public WebServer(PrinterDiscovery printerDiscovery) {
         this.printerDiscovery = printerDiscovery;
@@ -58,15 +62,15 @@ public class WebServer {
 
     public void init() throws IOException {
 
-        final StatusManager status = new StatusManager(printerDiscovery, preferredPrinterId);
-        status.setInterval(refreshInterval);
-        status.setPostRefreshCommand(postRefreshCommand);
+        final StatusManager statusManager = new StatusManager(printerDiscovery, preferredPrinterId);
+        statusManager.setInterval(refreshInterval);
+        statusManager.setPostRefreshCommand(postRefreshCommand);
         if (refreshCommandFormat != null) {
-            status.setFormat(refreshCommandFormat);
+            statusManager.setFormat(refreshCommandFormat);
         }
-        status.start();
+        statusManager.start();
 
-        Image image = imageCommand != null ? new Image() : null;
+        ImageCache image = imageCommand != null ? new ImageCache() : null;
         if (image != null) {
             image.setInterval(imageRefreshInterval);
             image.setImageCommand(imageCommand);
@@ -84,7 +88,8 @@ public class WebServer {
             staticFiles = new File(staticDir);
         }
 
-        WebServer.MainHandler mainHandler = new WebServer.MainHandler(status, templateFile, image, staticFiles);
+        // TODO add other templates
+        WebServer.MainHandler mainHandler = new WebServer.MainHandler(statusManager, templateFile, null, null, null, image, staticFiles);
         server.createContext("/", mainHandler);
         server.setExecutor(null); // creates a default executor
     }
@@ -181,234 +186,300 @@ public class WebServer {
         this.allowCommandsFlag = allowCommandsFlag;
     }
 
-    /**
-     * @param templateFile
-     * @return
-     */
-    public static String loadMainResponseTemplate(File templateFile) throws IOException {
-        StringBuilder res = new StringBuilder();
-        InputStream is;
-        if (templateFile == null) {
-            is = WebCommand.class.getResourceAsStream("/index.html");
-        } else {
-            is = new FileInputStream(templateFile);
-        }
-        try {
-            byte[] buf = new byte[10240];
-            int r = is.read(buf);
-            while (r > 0) {
-                res.append(new String(buf, 0, r));
-                r = is.read(buf);
-            }
-        } finally {
-            is.close();
-        }
-        return res.toString();
+    public int getAutomaticRefrehs() {
+        return automaticRefresh ;
     }
 
-    public static String templateSubstitution(String page, ExtendedPrinterStatus status) {
-            StringBuilder res = new StringBuilder();
+    public void setAutomaticRefresh(int automaticRefresh) {
+        this.automaticRefresh = automaticRefresh;
+    }
 
-            int ptr = 0;
 
-            PrinterStatusResponse ps = status != null ? status.getPrinterStatus() : null;
-            Estimate estimate = status != null ? status.getEstimate() : null;
+    private static enum ReturnContent {
+        MAIN_BODY, CAPTURE_IMAGE, STATIC_FILE, NOT_FOUND, REDIRECT_TO_MAIN_BODY, REDIRECT_TO_ONE_PRINTER, LIST_PRINTERS, NO_PRINTERS
+    }
 
-            int i = page.indexOf("${", ptr);
-            while (i >= 0) {
-                res.append(page.substring(ptr, i));
-                int j = page.indexOf("}", i);
-                if (j >= 0) {
-                    String var = page.substring(i + 2, j);
-                    ptr = j + 1;
+    public class MainHandler implements HttpHandler {
 
-                    if ("status".equals(var)) {
-                        if (status != null) {
-                            res.append(status.getOverallPrinterStatus().getText());
-                        } else {
-                            res.append("No printers detected.");
-                        }
-                    } else if ("busy".equals(var)) {
-                        if (ps != null) {
-                            res.append(ps.isBusy());
-                        } else {
-                            res.append("");
-                        }
-                    } else if ("job_id".equals(var)) {
-                        if (ps != null) {
-                            res.append(ps.getPrintJob());
-                        } else {
-                            res.append("");
-                        }
-                    } else if ("estimate".equals(var)) {
-                        if (estimate != null) {
-                            String e = estimate.toString();
-                            if (estimate.getPrintStatus() == EstimateState.IDLE) {
-                                e = "No print in progress";
-                            } else if (estimate.getPrintStatus() == EstimateState.NO_LINES) {
-                                e = "No lines submitted. Select a file: "
-                                        + "<form action=\"/upload\"> enctype=\"multipart/form-data\" method=\"post\">"
-                                        + "<input type=\"file\" name=\"file\"><input type=\"submit\" value=\"Send\"></form>";
-                            } else if (estimate.getPrintStatus() == EstimateState.PREPARING) {
-                                e = "Too early to make estimate. Try again in a few moments.";
-                            }
-                            res.append(e);
-                        } else {
-                            res.append("");
-                        }
-                    } else if ("estimate_hours".equals(var)) {
-                        if (estimate != null) {
-                            res.append(estimate.getHours());
-                        } else {
-                            res.append("");
-                        }
-                    } else if ("estimate_mins".equals(var)) {
-                        if (estimate != null) {
-                            res.append(estimate.getMinutes());
-                        } else {
-                            res.append("");
-                        }
-                    } else if ("estimate_secs".equals(var)) {
-                        if (estimate != null) {
-                            res.append(estimate.getSeconds());
-                        } else {
-                            res.append("");
-                        }
-                    } else if ("current_line".equals(var)) {
-                        if (ps != null) {
-                            res.append(ps.getLineNumber());
-                        } else {
-                            res.append("");
-                        }
-                    } else if ("total_lines".equals(var)) {
-                        if (estimate != null && estimate.getTotalLines() >= 0) {
-                            res.append(estimate.getTotalLines());
-                        } else {
-                            res.append("unknown");
-                        }
-    //                } else if ("".equals(var)) {
-                    } else {
-                        res.append("UNKNOWN SUBSTITUTION VARIABLE \"" + var + "\"");
-                    }
-                    i = page.indexOf("${", ptr);
-                } else {
-                    i = -1;
-                }
-            }
-            if (ptr < page.length()) {
-                res.append(page.substring(ptr));
-            }
-
-            return res.toString();
-        }
-
-    public static class MainHandler implements HttpHandler {
-
-        private File templateFile;
-        private String mainResponse;
-        private long mainResponseLastChanged = 0;
+        private static final long DAY = 1000 * 60 * 60 * 24;
+        private Template mainResponse;
+        private Template listPrintersResponse;
+        private Template noPrintersResponse;
+        private Template notFoundResponse;
+        private Template exceptionResponse;
         private StatusManager statusManager;
-        private Image image;
+        private ImageCache imageCache;
         private File staticFiles;
 
-        public MainHandler(StatusManager status, File templateFile, Image image, File staticFiles) {
+        public MainHandler(StatusManager status, File mainTemplateFile, File listPrintersTemplateFile,
+                File noPrintersTemplateFile, File notFoundTemplateFile,
+                ImageCache imageCache, File staticFiles) {
             this.statusManager = status;
-            this.templateFile = templateFile;
-            this.image = image;
+            this.mainResponse = new Template(mainTemplateFile, "/index.html");
+            this.listPrintersResponse = new Template(mainTemplateFile, "/list-printers.html");
+            this.noPrintersResponse = new Template(mainTemplateFile, "/no-printers.html");
+            this.notFoundResponse = new Template(mainTemplateFile, "/404.html");
+            this.exceptionResponse = new Template(null, "/500.html");
+            this.imageCache = imageCache;
             this.staticFiles = staticFiles;
         }
 
         public void handle(HttpExchange exchange) throws IOException {
-            String method = exchange.getRequestMethod();
-            String path = exchange.getRequestURI().getPath();
+            try {
+                String method = exchange.getRequestMethod();
+                String path = exchange.getRequestURI().getPath();
 
-            int returnContent = WebCommand.MAIN_BODY;
+                ReturnContent returnContent = ReturnContent.MAIN_BODY;
 
-            File resourceFile = null;
-            InputStream resourceInputStream = null;
-
-            if ("GET".equals(method)) {
-                if (path.equals("/capture.jpg")) {
-                    returnContent = WebCommand.CAPTURE_IMAGE;
-                } else if (path.equals("/") || path.equals("/index.html") || path.equals("index.htm")) {
-                    returnContent = WebCommand.MAIN_BODY;
-                } else if (staticFiles != null) {
-                    resourceFile = new File(staticFiles, path.substring(1));
-                    if (resourceFile.exists() && resourceFile.isFile()) {
-                        returnContent = WebCommand.STATIC_FILE;
-                        resourceInputStream = new FileInputStream(resourceFile);
-                    }
-                } else {
-                    resourceInputStream = getClass().getResourceAsStream("/static_files" + path);
-                    if (resourceInputStream != null) {
-                        returnContent = WebCommand.STATIC_FILE;
-                    }
+                String errorMsg = "";
+                String previousErrorMsg = "";
+                Map<String, Cookie> requestCookies = CookiesUtility.getRequestCookies(exchange);
+                if (requestCookies.containsKey("errorMsg")) {
+                    previousErrorMsg = requestCookies.get("errorMsg").getValue();
                 }
-            } else if ("POST".equals(method)) {
-                if (path.equals("/pause")) {
-                    // pause printer
-                } else if (path.equals("/resume")) {
+                File resourceFile = null;
+                InputStream resourceInputStream = null;
 
-                } else if (path.equals("/abort")) {
+                ExtendedPrinterStatus status = null;
 
-                }
-            }
-
-            if (returnContent == WebCommand.MAIN_BODY) {
-                ExtendedPrinterStatus status = statusManager.selectOnePrinter();
-                // TODO - detect no/one/more printers
-
-                if ((templateFile != null && templateFile.lastModified() != mainResponseLastChanged)
-                        || mainResponse == null) {
-                    mainResponse = WebServer.loadMainResponseTemplate(templateFile);
-                    if (templateFile != null) {
-                        mainResponseLastChanged = templateFile.lastModified();
+                String printerId = null;
+                int i = path.substring(1).indexOf('/');
+                if (i > 0) {
+                    printerId = path.substring(1, i + 1);
+                    path = path.substring(i);
+                    status = statusManager.getPrinterStatus(printerId);
+                } else if (path.length() > 1 && !"/list".equals(path)) {
+                    printerId = path.substring(1);
+                    status = statusManager.getPrinterStatus(printerId);
+                    if (status != null) {
+                        path = "/";
+                    } else {
+                        printerId = null;
                     }
                 }
 
-                String body = WebServer.templateSubstitution(mainResponse, status);
+                if ("GET".equals(method)) {
+                    if (path.equals("/capture.jpg")) {
+                        returnContent = ReturnContent.CAPTURE_IMAGE;
+                    } else if (path.equals("/list")) {
+                        returnContent = ReturnContent.LIST_PRINTERS;
+                    } else if (printerId != null) {
+                        if (status != null) {
+                            if (path.equals("/") || path.equals("/index.html") || path.equals("index.htm")) {
+                                returnContent = ReturnContent.MAIN_BODY;
+                            }  else if (staticFiles != null) {
+                                resourceFile = new File(staticFiles, path);
+                                if (resourceFile.exists() && resourceFile.isFile()) {
+                                    returnContent = ReturnContent.STATIC_FILE;
+                                    resourceInputStream = new FileInputStream(resourceFile);
+                                }
+                            } else {
+                                resourceInputStream = getClass().getResourceAsStream("/static_files" + path);
+                                if (resourceInputStream != null) {
+                                    returnContent = ReturnContent.STATIC_FILE;
+                                }
+                            }
+                        } else {
+                            returnContent = ReturnContent.MAIN_BODY;
+                        }
+                    } else if ("/".equals(path) || path.equals("/index.html") || path.equals("index.htm")) {
+                        returnContent = ReturnContent.REDIRECT_TO_MAIN_BODY;
+                    } else {
+                        returnContent = ReturnContent.NOT_FOUND;
+                    }
+                } else if ("POST".equals(method)) {
+                    if (path.equals("/upload")) {
+                        Result result = UploadFile.uploadFile(exchange.getRequestBody());
+                        if (result == Result.UPLOADED) {
+                            errorMsg = "File successfully uploaded";
+                        } else if (result == Result.BAD_INPUT) {
+                            errorMsg = "Bad input";
+                        } else if (result == Result.NO_FILENAME) {
+                            errorMsg = "Cannot deduct filename";
+                        } else if (result == Result.NOT_TEXT) {
+                            errorMsg = "Cannot upload non text file";
+                        }
+                        if (printerId != null) {
+                            returnContent = ReturnContent.REDIRECT_TO_MAIN_BODY;
+                        } else {
+                            returnContent = ReturnContent.REDIRECT_TO_ONE_PRINTER;
+                        }
+                    } else {
+                        if (printerId != null) {
+                            if (status != null && !status.getOverallPrinterStatus().isError()) {
+                                if (allowCommandsFlag) {
+                                    Printer printer = status.getPrinter();
+                                    if (path.equals("/pause")) {
+                                        printer.pausePrinter();
+                                        // TODO read response
+                                        errorMsg = "Sent pause command to the printer";
+                                    } else if (path.equals("/resume")) {
+                                        printer.resumePrinter();
+                                        // TODO read response
+                                        errorMsg = "Sent resume command to the printer";
+                                    } else if (path.equals("/abort")) {
+                                        printer.abortPrint();
+                                        // TODO read response
+                                        errorMsg = "Sent abort print command to the printer";
+                                    }
+                                } else {
+                                    errorMsg = "Issuing commands to printer not allowed";
+                                }
+                                returnContent = ReturnContent.REDIRECT_TO_MAIN_BODY;
+                            } else {
+                                errorMsg = "Printer not available";
+                                returnContent = ReturnContent.REDIRECT_TO_MAIN_BODY;
+                            }
+                        } else {
+                            returnContent = ReturnContent.NOT_FOUND;
+                        }
+                    }
+                }
+
+                String templateErrorMsg = errorMsg;
+                if ((errorMsg == null || "".equals(errorMsg))
+                        && (previousErrorMsg != null && !"".equals(previousErrorMsg))) {
+                    templateErrorMsg = previousErrorMsg;
+                }
+
+                if (returnContent == ReturnContent.MAIN_BODY) {
+
+                    String body = mainResponse.getBody(WebServer.this, status, statusManager.getPrinters().size(), templateErrorMsg);
+
+                    exchange.getResponseHeaders().add("Content-Length", Integer.toString(body.length()));
+                    exchange.getResponseHeaders().add("Content-Type", "text/html");
+
+                    // remove errorMsg cookie
+                    CookiesUtility.addResponseCookies(exchange, new Cookie().withName("errorMsg").withValue(errorMsg).withExpires(new Date(0)));
+
+                    exchange.sendResponseHeaders(200, body.length());
+                    exchange.getResponseBody().write(body.getBytes());
+                    exchange.getResponseBody().close();
+                } else if (returnContent == ReturnContent.STATIC_FILE) {
+                    exchange.getResponseHeaders().add("Content-Type", contentTypeFromFileName(path));
+                    if (resourceFile != null) {
+                        exchange.getResponseHeaders().add("Content-Length", Long.toString(resourceFile.length()));
+                        exchange.sendResponseHeaders(200, resourceFile.length());
+                    } else {
+                        exchange.sendResponseHeaders(200, 0);
+                    }
+                    byte[] buf = new byte[10240];
+                    int r = resourceInputStream.read(buf);
+                    while (r > 0) {
+                        exchange.getResponseBody().write(buf, 0, r);
+                        r = resourceInputStream.read(buf);
+                    }
+                    exchange.getResponseBody().close();
+                } else if (returnContent == ReturnContent.CAPTURE_IMAGE) {
+                    if (imageCache != null) {
+                        byte[] imageContent = imageCache.getImage();
+                        if (imageContent != null) {
+                            exchange.getResponseHeaders().add("Content-Length", Integer.toString(imageContent.length));
+                            exchange.getResponseHeaders().add("Content-Type", "image/jpeg");
+                            exchange.sendResponseHeaders(200, imageContent.length);
+                            exchange.getResponseBody().write(imageContent);
+                            exchange.getResponseBody().close();
+                        } else {
+                            returnContent = ReturnContent.NOT_FOUND;
+                        }
+                    } else {
+                        returnContent = ReturnContent.NOT_FOUND;
+                    }
+                }
+
+                if (returnContent == ReturnContent.REDIRECT_TO_MAIN_BODY) {
+                    if (status == null) {
+                        status = statusManager.selectOnePrinter();
+                    }
+                    if (status != null) {
+                        printerId = status.getPrinter().getPrinterId();
+                        String host = exchange.getRequestHeaders().getFirst("Host");
+                        String locationUrl = "http://" + host + "/" + printerId;
+                        if (errorMsg != null && !"".equals(errorMsg)) {
+                            CookiesUtility.addResponseCookies(exchange, new Cookie()
+                                        .withName("errorMsg").withValue(errorMsg)
+                                        .withExpires(new Date(System.currentTimeMillis() + DAY * 2))); // two days in future as we're not calculating GMT time
+                        }
+                        exchange.getResponseHeaders().add("Location", locationUrl);
+                        exchange.sendResponseHeaders(302, 0);
+                        exchange.getResponseBody().close();
+                    } else if (statusManager.getPrinters().size() > 0) {
+                        returnContent = ReturnContent.LIST_PRINTERS;
+                    } else {
+                        returnContent = ReturnContent.NO_PRINTERS;
+                    }
+                }
+                if (returnContent == ReturnContent.LIST_PRINTERS) {
+
+                    StringBuilder list = new StringBuilder();
+
+                    for (Printer printer : statusManager.getPrinters().values()) {
+                        String id = printer.getPrinterId();
+                        ExtendedPrinterStatus s = statusManager.getPrinterStatus(id);
+                        if (s != null && !s.getOverallPrinterStatus().isError()) {
+                            list.append("<li><a href=\"/" + id + "/\"><div class=\"printer\">" + printer.getPrinterName() + "</div></a></li>\n");
+                        } else {
+                            list.append("<li><div class=\"printer\">" + printer.getPrinterName() + "</div></li>\n");
+                        }
+                    }
+                    Map<String, String> substitutions = new HashMap<String, String>();
+                    substitutions.put("printers_list", list.toString());
+                    String body = listPrintersResponse.getBody(substitutions);
+
+                    exchange.getResponseHeaders().add("Content-Length", Integer.toString(body.length()));
+                    exchange.getResponseHeaders().add("Content-Type", "text/html");
+
+                    // remove errorMsg cookie
+                    CookiesUtility.addResponseCookies(exchange, new Cookie().withName("errorMsg").withValue(errorMsg).withExpires(new Date(0)));
+
+                    exchange.sendResponseHeaders(200, body.length());
+                    exchange.getResponseBody().write(body.getBytes());
+                    exchange.getResponseBody().close();
+
+                }
+
+                if (returnContent == ReturnContent.NO_PRINTERS) {
+                    String body = noPrintersResponse.getBody(WebServer.this, status, statusManager.getPrinters().size(), templateErrorMsg);
+
+                    exchange.getResponseHeaders().add("Content-Length", Integer.toString(body.length()));
+                    exchange.getResponseHeaders().add("Content-Type", "text/html");
+
+                    // remove errorMsg cookie
+                    CookiesUtility.addResponseCookies(exchange, new Cookie().withName("errorMsg").withValue(errorMsg).withExpires(new Date(0)));
+
+                    exchange.sendResponseHeaders(200, body.length());
+                    exchange.getResponseBody().write(body.getBytes());
+                    exchange.getResponseBody().close();
+                }
+
+                if (returnContent == ReturnContent.NOT_FOUND) {
+                    String body = notFoundResponse.getBody(WebServer.this, status, statusManager.getPrinters().size(), exchange.getRequestURI().toString());
+
+                    exchange.getResponseHeaders().add("Content-Length", Integer.toString(body.length()));
+                    exchange.getResponseHeaders().add("Content-Type", "text/html");
+
+                    // remove errorMsg cookie
+                    CookiesUtility.addResponseCookies(exchange, new Cookie().withName("errorMsg").withValue(errorMsg).withExpires(new Date(0)));
+
+                    exchange.sendResponseHeaders(404, body.length());
+                    exchange.getResponseBody().write(body.getBytes());
+                    exchange.getResponseBody().close();
+                }
+            } catch (Throwable t) {
+                StringWriter error = new StringWriter();
+                PrintWriter out = new PrintWriter(error);
+                t.printStackTrace(out);
+
+                String body = exceptionResponse.getBody(WebServer.this, null, statusManager.getPrinters().size(), error.toString());
+
                 exchange.getResponseHeaders().add("Content-Length", Integer.toString(body.length()));
                 exchange.getResponseHeaders().add("Content-Type", "text/html");
-                exchange.sendResponseHeaders(200, body.length());
+
+                // remove errorMsg cookie
+                CookiesUtility.addResponseCookies(exchange, new Cookie().withName("errorMsg").withValue("").withExpires(new Date(0)));
+
+                exchange.sendResponseHeaders(500, body.length());
                 exchange.getResponseBody().write(body.getBytes());
-                exchange.getResponseBody().close();
-            } else if (returnContent == WebCommand.STATIC_FILE) {
-                exchange.getResponseHeaders().add("Content-Type", contentTypeFromFileName(path));
-                if (resourceFile != null) {
-                    exchange.getResponseHeaders().add("Content-Length", Long.toString(resourceFile.length()));
-                    exchange.sendResponseHeaders(200, resourceFile.length());
-                } else {
-                    exchange.sendResponseHeaders(200, 0);
-                }
-                byte[] buf = new byte[10240];
-                int r = resourceInputStream.read(buf);
-                while (r > 0) {
-                    exchange.getResponseBody().write(buf, 0, r);
-                    r = resourceInputStream.read(buf);
-                }
-                exchange.getResponseBody().close();
-            } else if (returnContent == WebCommand.CAPTURE_IMAGE) {
-                if (image != null) {
-                    byte[] imageContent = image.getImage();
-                    if (imageContent != null) {
-                        exchange.getResponseHeaders().add("Content-Length", Integer.toString(imageContent.length));
-                        exchange.getResponseHeaders().add("Content-Type", "image/jpeg");
-                        exchange.sendResponseHeaders(200, imageContent.length);
-                        exchange.getResponseBody().write(imageContent);
-                        exchange.getResponseBody().close();
-                    } else {
-                        returnContent = WebCommand.NOT_FOUND;
-                    }
-                } else {
-                    returnContent = WebCommand.NOT_FOUND;
-                }
-            }
-            if (returnContent == WebCommand.NOT_FOUND) {
-                String response = "<html><body>Resource not found</body></html>";
-                exchange.getResponseHeaders().add("Content-Length", Integer.toString(response.length()));
-                exchange.getResponseHeaders().add("Content-Type", "text/html");
-                exchange.sendResponseHeaders(200, response.length());
-                exchange.getResponseBody().write(response.getBytes());
                 exchange.getResponseBody().close();
             }
         }

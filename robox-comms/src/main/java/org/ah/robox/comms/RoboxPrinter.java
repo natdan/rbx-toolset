@@ -15,6 +15,7 @@ package org.ah.robox.comms;
 import java.io.IOException;
 
 import org.ah.robox.comms.request.RequestFactory;
+import org.ah.robox.comms.response.PrinterDetailsResponse;
 import org.ah.robox.comms.response.PrinterStatusResponse;
 import org.ah.robox.comms.response.Response;
 import org.ah.robox.comms.response.ResponseFactory;
@@ -29,6 +30,8 @@ public class RoboxPrinter implements Printer {
     private PrinterChannel printerChannel;
     private ResponseFactory printerResponseFactory;
     private RequestFactory printerRequestFactory;
+    private PrinterDetailsResponse printerDetails;
+    private String printerId;
 
     public RoboxPrinter(PrinterChannel printerChannel) {
         this.printerChannel = printerChannel;
@@ -37,8 +40,25 @@ public class RoboxPrinter implements Printer {
         printerRequestFactory = new RequestFactory(printerChannel.getOutputStream());
     }
 
+    public void init() throws IOException {
+        printerRequestFactory.sendGetPrinterDetails();
+        Response response = printerResponseFactory.readResponse();
+
+        if (response instanceof PrinterDetailsResponse) {
+            printerDetails = (PrinterDetailsResponse)response;
+
+            printerId = printerDetails.getSerialNumber();
+        } else {
+            throw new UnexpectedPrinterResponse(response);
+        }
+    }
+
     public void close() {
         printerChannel.close();
+    }
+
+    public String getPrinterId() {
+        return printerId;
     }
 
     public PrinterChannel getPrinterChannel() {
@@ -83,6 +103,18 @@ public class RoboxPrinter implements Printer {
         }
 
         throw new UnexpectedPrinterResponse(response);
+    }
+
+    public String getPrinterName() {
+        return printerDetails.getPrinterName();
+    }
+
+    public String getModel() {
+        return printerDetails.getModel();
+    }
+
+    public String getSerialNumber() {
+        return printerDetails.getSerialNumber();
     }
 
 }

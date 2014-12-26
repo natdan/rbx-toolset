@@ -25,9 +25,7 @@ import org.ah.robox.OverallPrinterStatus;
 import org.ah.robox.PrintStatusCommand;
 import org.ah.robox.PrintStatusCommand.Estimate;
 import org.ah.robox.comms.Printer;
-import org.ah.robox.comms.PrinterChannel;
 import org.ah.robox.comms.PrinterDiscovery;
-import org.ah.robox.comms.RoboxPrinter;
 import org.ah.robox.comms.response.PrinterStatusResponse;
 
 /**
@@ -74,22 +72,53 @@ public class StatusManager implements Runnable {
             }
             while (run) {
                 try {
-                    ExtendedPrinterStatus extendedPrinterStatus = null;
                     if (run) {
                         updatePrinters();
 
-                        Set<String> knownPrinterIds = new HashSet<String>(statuses.keySet());
+                        Set<String> knownButNotPresentPrinterIds = new HashSet<String>(statuses.keySet());
                         for (Printer printer : printers.values()) {
                             try {
-                                PrinterStatusResponse printerStatus = printer.getPrinterStatus();
-                                String printerId = printer.getPrinterChannel().getPrinterDeviceId();
-                                knownPrinterIds.remove(printerId);
-                                ExtendedPrinterStatus status = statuses.get(printerId);
-                                if (status == null) {
-                                    status = new ExtendedPrinterStatus(printer);
-                                    statuses.put(printerId, status);
+                                synchronized (printer) {
+                                    PrinterStatusResponse printerStatus = printer.getPrinterStatus();
+                                    String printerId = printer.getPrinterId();
+                                    knownButNotPresentPrinterIds.remove(printerId);
+                                    ExtendedPrinterStatus extendedPrinterStatus = statuses.get(printerId);
+                                    if (extendedPrinterStatus == null) {
+                                        extendedPrinterStatus = new ExtendedPrinterStatus(printer);
+                                        statuses.put(printerId, extendedPrinterStatus);
+                                    }
+                                    extendedPrinterStatus.setPrinterStatus(printerStatus);
+                                    if (extendedPrinterStatus.getPrinterStatus() != null
+                                            && extendedPrinterStatus.getPrinterStatus().getPrintJob() != null
+                                            && extendedPrinterStatus.getPrinterStatus().getPrintJob().length() > 0) {
+
+                                        String printJob = extendedPrinterStatus.getPrinterStatus().getPrintJob();
+                                        if (Main.verboseFlag) {
+                                            System.out.println("Got print job: " + printJob);
+                                        }
+                                        try {
+                                            Estimate estimateTime = PrintStatusCommand.calculateEstimate(printJob, extendedPrinterStatus.getPrinterStatus().getLineNumber(), System.currentTimeMillis());
+                                            extendedPrinterStatus.setEstimate(estimateTime);
+
+                                            OverallPrinterStatus overallStatus = extendedPrinterStatus.getOverallPrinterStatus();
+                                            param = estimateTime.toString(format).replace("%c", overallStatus.name());
+
+                                        } catch (IOException e) {
+                                            String emptyTime = format.replace("%h", "").replace("%m", "").replace("%s", "");
+                                            param = emptyTime.replace("%c", "ERROR:IOException"  + e.getMessage());
+                                        }
+                                    } else {
+                                        if (Main.verboseFlag) {
+                                            System.out.println("No print job.");
+                                        }
+                                        String emptyTime = format.replace("%h", "").replace("%m", "").replace("%s", "");
+                                        param = emptyTime.replace("%c", "Idle");
+                                    }
+                                    if (run && postRefreshCommand != null && extendedPrinterStatus != null) {
+                                        // TODO - this needs re-working
+                                        invokeCommand(extendedPrinterStatus);
+                                    }
                                 }
-                                status.setPrinterStatus(printerStatus);
                             } catch (IOException e) {
                                 if (Main.debugFlag) {
                                     System.err.println("Failed to obtain printer status: " + e.getMessage());
@@ -98,51 +127,10 @@ public class StatusManager implements Runnable {
                             }
                         }
 
-                        for (String knowPrinterId : knownPrinterIds) {
+                        for (String knowPrinterId : knownButNotPresentPrinterIds) {
                             ExtendedPrinterStatus status = statuses.get(knowPrinterId);
                             status.setPrinterStatus(null);
                         }
-
-                        extendedPrinterStatus = selectOnePrinter();
-
-//                        if (preferredPrinterId != null) {
-//                            printerStatus = statuses.get(preferredPrinterId);
-//                        }
-//                        if (printerStatus == null && statuses.size() == 1) {
-//                            printerStatus = statuses.values().iterator().next();
-//                        }
-                        // getOverallPrinterStatus
-                        if (extendedPrinterStatus != null
-                                && extendedPrinterStatus.getPrinterStatus() != null
-                                && extendedPrinterStatus.getPrinterStatus().getPrintJob() != null
-                                && extendedPrinterStatus.getPrinterStatus().getPrintJob().length() > 0) {
-
-                            String printJob = extendedPrinterStatus.getPrinterStatus().getPrintJob();
-                            if (Main.verboseFlag) {
-                                System.out.println("Got print job: " + printJob);
-                            }
-                            try {
-                                Estimate estimateTime = PrintStatusCommand.calculateEstimate(printJob, extendedPrinterStatus.getPrinterStatus().getLineNumber(), System.currentTimeMillis());
-                                extendedPrinterStatus.setEstimate(estimateTime);
-
-                                OverallPrinterStatus status = extendedPrinterStatus.getOverallPrinterStatus();
-                                param = estimateTime.toString(format).replace("%c", status.name());
-
-                            } catch (IOException e) {
-                                String emptyTime = format.replace("%h", "").replace("%m", "").replace("%s", "");
-                                param = emptyTime.replace("%c", "ERROR:IOException"  + e.getMessage());
-                            }
-                        } else {
-                            if (Main.verboseFlag) {
-                                System.out.println("No print job.");
-                            }
-                            String emptyTime = format.replace("%h", "").replace("%m", "").replace("%s", "");
-                            param = emptyTime.replace("%c", "Idle");
-                        }
-                    }
-                    if (run && postRefreshCommand != null && extendedPrinterStatus != null) {
-                        // TODO - this needs re-working
-                        invokeCommand(extendedPrinterStatus);
                     }
                     if (Main.debugFlag) {
                         System.out.println("Printer status waiting for " + (interval * 1000));
@@ -202,13 +190,20 @@ public class StatusManager implements Runnable {
         return selectedStatus;
     }
 
+    public Map<String, Printer> getPrinters() {
+        return printers;
+    }
+
+    public ExtendedPrinterStatus getPrinterStatus(String printerId) {
+        return statuses.get(printerId);
+    }
+
     private void updatePrinters() throws IOException {
-        List<PrinterChannel> allPrinterChannels = printerDiscovery.findAllPrinters();
-        for (PrinterChannel printerChannel : allPrinterChannels) {
-            String printerId = printerChannel.getPrinterDeviceId();
+        List<Printer> allPrinters = printerDiscovery.findAllPrinters();
+        for (Printer printer : allPrinters) {
+            String printerId = printer.getPrinterId();
             Printer existingPrinter = printers.get(printerId);
             if (existingPrinter == null) {
-                Printer printer = new RoboxPrinter(printerChannel);
                 printers.put(printerId, printer);
             }
         }

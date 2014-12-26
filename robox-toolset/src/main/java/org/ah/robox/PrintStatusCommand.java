@@ -19,8 +19,6 @@ import java.io.IOException;
 import java.util.List;
 
 import org.ah.robox.comms.Printer;
-import org.ah.robox.comms.PrinterChannel;
-import org.ah.robox.comms.RoboxPrinter;
 import org.ah.robox.comms.response.PrinterStatusResponse;
 
 /**
@@ -30,7 +28,9 @@ import org.ah.robox.comms.response.PrinterStatusResponse;
  */
 public class PrintStatusCommand {
 
-    public static void execute(PrinterChannel selectedChannel, List<String> args) throws Exception {
+    public static int ESTIMATE_MIN_LINES = 100; // 100 is arbirtary number that is greater than setup: heating heads/bed, home, short purge, etc...
+
+    public static void execute(Printer printer, List<String> args) throws Exception {
 
         boolean estimateFlag = false;
         boolean shortFlag = false;
@@ -64,8 +64,6 @@ public class PrintStatusCommand {
             }
         }
 
-        Printer printer = new RoboxPrinter(selectedChannel);
-
         PrinterStatusResponse printStatus = printer.getPrinterStatus();
 
         String printJob = printStatus.getPrintJob();
@@ -73,12 +71,12 @@ public class PrintStatusCommand {
         boolean hasRunningJobs = printJob != null && printJob.length() > 0;
 
         UploadCommand.cleanupConfigDir(printJob);
-        if (printStatus.getLineNumber() > 100) { // 100 is arbirtary number that is greater than setup: heating heads/bed, home, short purge, etc...
+        if (printStatus.getLineNumber() > ESTIMATE_MIN_LINES) {
             createEstimateFile(printJob, printStatus.getLineNumber());
         }
 
         if (!shortFlag) {
-            System.out.println("There a print in progress @ " + selectedChannel.getPrinterDeviceId() + "(" + selectedChannel.getPrinterPath() + ")");
+            System.out.println("There a print in progress @ " + printer.getPrinterName() + "(" + printer.getPrinterChannel().getPrinterPath() + ")");
         }
         if (jobFlag || allFlag) {
             if (shortFlag) {
@@ -207,7 +205,7 @@ public class PrintStatusCommand {
         File configDir = UploadCommand.ensureConfigDir();
         File estimateFile = new File(configDir, printJob + ".estimate");
         if (!estimateFile.exists()) {
-            if (currentLine > 100) { // 100 is arbirtary number that is greater than setup: heating heads/bed, home, short purge, etc...
+            if (currentLine > ESTIMATE_MIN_LINES) { // 100 is arbirtary number that is greater than setup: heating heads/bed, home, short purge, etc...
                 createEstimateFile(printJob, currentLine);
             } else {
                 return new Estimate(0, 0, 0, -1, EstimateState.PREPARING);

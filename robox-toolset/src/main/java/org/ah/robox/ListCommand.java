@@ -14,7 +14,7 @@ package org.ah.robox;
 
 import java.util.List;
 
-import org.ah.robox.comms.PrinterChannel;
+import org.ah.robox.comms.Printer;
 
 /**
  *
@@ -23,15 +23,15 @@ import org.ah.robox.comms.PrinterChannel;
  */
 public class ListCommand {
 
-    public static void execute(List<PrinterChannel> printerChannels) {
-        if (printerChannels.size() == 0) {
+    public static void execute(List<Printer> printers) {
+        if (printers.size() == 0) {
             System.out.println("There are not detected printers.");
         } else {
             System.out.println("Detected printers:");
             int i = 1;
-            for (PrinterChannel channel : printerChannels) {
-                System.out.println("    " + i + ":" + channel.getPrinterDeviceId() + " @ " + channel.getPrinterPath());
-                channel.close();
+            for (Printer printer : printers) {
+                System.out.println("    " + i + ":" + printer.getPrinterName() + " @ " + printer.getPrinterChannel().getPrinterPath());
+                printer.close();
                 i++;
             }
         }

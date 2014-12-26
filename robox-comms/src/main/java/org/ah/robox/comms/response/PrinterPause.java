@@ -19,7 +19,7 @@ package org.ah.robox.comms.response;
 public enum PrinterPause {
 
     UNKNOWN(-1, "Unknown"),
-    WORKING(0, "Working"),
+    NOT_PAUSED(0, "Working"),
     PAUSING(1, "Pausing"),
     PAUSED(2, "Paused"),
     RESUMING(3, "Resuming");

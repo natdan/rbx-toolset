@@ -15,10 +15,7 @@ package org.ah.robox;
 import java.io.File;
 import java.util.List;
 
-import org.ah.robox.comms.Printer;
-import org.ah.robox.comms.PrinterChannel;
 import org.ah.robox.comms.PrinterDiscovery;
-import org.ah.robox.comms.RoboxPrinter;
 import org.ah.robox.web.WebServer;
 
 /**
@@ -27,11 +24,6 @@ import org.ah.robox.web.WebServer;
  * @author Daniel Sendula
  */
 public class WebCommand {
-
-    public static final int MAIN_BODY = 0;
-    public static final int CAPTURE_IMAGE = 1;
-    public static final int STATIC_FILE = 2;
-    public static final int NOT_FOUND = 3;
 
     public static void execute(PrinterDiscovery printerDiscovery, String printerId, List<String> args) throws Exception {
 
@@ -43,7 +35,7 @@ public class WebCommand {
         boolean staticDirFlag = false;
         boolean templateFileFlag = false;
         boolean refreshCommandFormatFlag = false;
-//        boolean allowCommandsFlag = false;
+        boolean automaticRefrehsFlag = false;
 
         WebServer webServer = new WebServer(printerDiscovery);
         String templateFileName = null;
@@ -75,7 +67,7 @@ public class WebCommand {
                 try {
                     webServer.setRefreshInterval(Integer.parseInt(a));
                 } catch (NumberFormatException e) {
-                    System.err.println("Bad number '" + a + "'");
+                    System.err.println("Bad number for status refresh interval '" + a + "'");
                     System.exit(1);
                 }
                 refreshIntervalFlag = false;
@@ -83,7 +75,7 @@ public class WebCommand {
                 try {
                     webServer.setImageRefreshInterval(Integer.parseInt(a));
                 } catch (NumberFormatException e) {
-                    System.err.println("Bad number '" + a + "'");
+                    System.err.println("Bad number for image refresh interval '" + a + "'");
                     System.exit(1);
                 }
                 imageRefreshIntervalFlag = false;
@@ -103,6 +95,13 @@ public class WebCommand {
             } else if (staticDirFlag) {
                 webServer.setStaticDir(a);
                 staticDirFlag = false;
+            } else if (automaticRefrehsFlag) {
+                try {
+                    webServer.setAutomaticRefresh(Integer.parseInt(a));
+                } catch (NumberFormatException e) {
+                    System.err.println("Bad number for automatic refresh '" + a + "'");
+                    System.exit(1);
+                }
             } else if ("-p".equals(a) || "--port".equals(a)) {
                 portFlag = true;
             } else if ("-rs".equals(a) || "--refresh-status-interval".equals(a)) {
@@ -121,6 +120,8 @@ public class WebCommand {
                 templateFileFlag = true;
             } else if ("-sf".equals(a) || "--static-files".equals(a)) {
                 staticDirFlag = true;
+            } else if ("-ar".equals(a) || "--automatic-refresh".equals(a)) {
+                automaticRefrehsFlag = true;
             } else {
                 System.err.println("Unknown option: '" + a + "'");
                 printHelp();
@@ -151,9 +152,12 @@ public class WebCommand {
         } else if (staticDirFlag) {
             System.err.println("Missing static directory.");
             System.exit(1);
+        } else if (automaticRefrehsFlag) {
+            System.err.println("Missing automatic refresh value.");
+            System.exit(1);
         }
 
-        if (templateFileName == null) {
+        if (templateFileName != null) {
             webServer.setTemplateFile(new File(templateFileName));
             if (!webServer.getTemplateFile().exists()) {
                 System.err.println("Template file does not exist '" + templateFileName + "'.");
@@ -186,37 +190,63 @@ public class WebCommand {
         System.out.println("                         It is machine readable format.");
 
         System.out.println("  -p | --port                     - port to start web server.");
-        System.out.println("  -rs | --refresh-status-interval - refresh status interval in seconds.");
-        System.out.println("        It is how often printer is going to be queried for the status.");
-        System.out.println("        Default is 15 seconds.");
-        System.out.println("  -ri | --refresh-image-interval  - refresh image interval in seconds.");
-        System.out.println("        It is how image is fetched is going to be queried for the status.");
-        System.out.println("        Default is 5 seconds. Also, if on RPi and raspistill is detected");
-        System.out.println("        it will automatically be used.");
-        System.out.println("  -ic | --image-command              - imaage command. This is shell command to be used");
-        System.out.println("        to fetch image. Command should send image data in jpg format to stdout.");
-        System.out.println("  -pc | --post-refresh-command       - comamnd to be called after printer status was");
-        System.out.println("        fetched. It will be called with estimage format string as first parameter.");
-        System.out.println("  -cf | --post-refresh-command-format - Format post refresh command is going to get");
-        System.out.println("        estimate in. Placeholders are %c - command, %h -hours, %m - minutes (in.");
+        System.out.println("  -rs | --refresh-status-interval <value-in-seconds>");
+        System.out.println("        Refresh status interval in seconds. It is how often printer is going");
+        System.out.println("        to be queried for the status. Default is 15 seconds.");
+        System.out.println("  -ri | --refresh-image-interval <value-in-seconds>");
+        System.out.println("        Refresh image interval in seconds. It is how image is fetched is going");
+        System.out.println("        to be queried for the status. Also, if on RPi and raspistill is detected");
+        System.out.println("        it will automatically be used. Default is 5 seconds");
+        System.out.println("  -ic | --image-command <shell-command>");
+        System.out.println("        Imaage command. This is shell command to be used to fetch image.");
+        System.out.println("        Command should send image data in jpg format to stdout.");
+        System.out.println("  -pc | --post-refresh-command <shell-command>");
+        System.out.println("        Comamnd to be called after printer status was fetched.");
+        System.out.println("        It will be called with estimage format string as first parameter.");
+        System.out.println("  -cf | --post-refresh-command-format <format-string>");
+        System.out.println("        Format post refresh command is going to get estimate in.");
+        System.out.println("        Placeholders are %c - command, %h -hours, %m - minutes (in.");
         System.out.println("        two digit format), %s - seconds (in two digit format).");
         System.out.println("        Default format is %c: %h:%m");
-        System.out.println("  -ac | --allow-commands              - if set web pages will allow commaindg printer:");
+        System.out.println("  -ac | --allow-commands ");
+        System.out.println("        If set web pages will allow commaindg printer:");
         System.out.println("        sending pause, resume and abort commands.");
-        System.out.println("  -t  | --template-file               - template html file for status file. See");
+        System.out.println("  -t  | --template-file <file>");
+        System.out.println("        Template html file for status file. See");
         System.out.println("        -sf/--static-files switch for extra resources like css/images...");
-        System.out.println("  -sf | --static-files                - directory where static files are stored.");
+        System.out.println("  -sf | --static-files <directory>");
+        System.out.println("        Directory where static files are stored.");
         System.out.println("        They are going to be served from root of web app ('/').");
+        System.out.println("  -ar | --automatic-refresh <value-in-seconds>");
+        System.out.println("        Enables internal template to create html page refresh. External templates");
+        System.out.println("        can utilise it by adding ${automatic-refresh} placeholder in html head part.");
         System.out.println("");
         System.out.println("Template file should have following placeholders:");
+        System.out.println("");
         System.out.println("${status}   - printing status (\"Unknown\", \"Working\", \"Pausing\", \"Paused\", \"Resuming\")");
         System.out.println("${busy}     - is printer busy or not (\"true\", \"false\"). Can be used directly in javascript.");
         System.out.println("${job_id}   - printer job id.");
+        System.out.println("${error_msg}      - previous request error message");
         System.out.println("${estimate}       - estimate time in %h:%m:%s format");
         System.out.println("${estimate_hours} - estimate time hours");
         System.out.println("${estimate_mins}  - estimate time minutes (with leading zero)");
         System.out.println("${estimate_secs}  - estimate time seconds (with leading zero)");
         System.out.println("${current_line}   - current line");
-//        System.out.println("${}");
+        System.out.println("${total_lines}    - total lines");
+        System.out.println("${current_line_and_total_line} - current line followed, optionally, with '/' and total lines");
+        System.out.println("${all_printers_link}           - link (or empty) to url with list of all printers.");
+        System.out.println("                                 It is set to empty if one or no printers available.");
+        System.out.println("${capture_image_tag}           - capture image tag. It is set to <img src=\"/capture.jpg\"/>");
+        System.out.println("                                 when capture is enabled or empty string if not.");
+        System.out.println("${capture_image_css_display}   - css for display attribute for capture image section.");
+        System.out.println("                                 It is set to inline when capture is enabled or none if not.");
+        System.out.println("${commands_css_display}        - css for display attribute for commands section.");
+        System.out.println("                                 It is set to inline when commands are enabled or none if not.");
+        System.out.println("${printers_list}               - applicable only to printers page - list of <li> tags");
+        System.out.println("                                 with links to known printers. Not connected printers will");
+        System.out.println("                                 have no links associanted.");
+        System.out.println("${automatic-refresh}           - tag for html head. It will be empty if -ar|--automatic-refresh");
+        System.out.println("                                 option is not added. ");
+        System.out.println("");
     }
 }

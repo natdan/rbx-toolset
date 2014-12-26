@@ -1,6 +1,7 @@
 <html>
 <head>
   <title>Print status</title>
+  ${automatic-refresh}
   <style type="text/css">
 
 body, td {
@@ -45,9 +46,15 @@ h1:after, h2:after
     display: block;
     border: 2px solid black;
 }
+.captureParagraph { display: ${capture_image_css_display}; }
+.commandsParagraph { display: ${commands_css_display}; }
+.errorMsg { color: #AA0000; }
   </style>
 </head>
 <body>
+  <div class="container">
+    <div class="last"><div class="errorMsg">${error_msg}</div></div>
+  </div>
   <h1>Robox Status</h1>
   <div class="container">
     <div class="first">
@@ -55,7 +62,8 @@ h1:after, h2:after
         <tr><td>Printer Status:&nbsp;&nbsp;</td><td>${status}</td></tr>
         <tr><td>Job id:</td><td>${job_id}</td></tr>
         <tr><td>Busy:</td><td>${busy}</td></tr>
-        <tr><td>Current line:</td><td>${current_line} / ${total_lines}</td></tr>
+        <tr><td>Current line:</td><td>${current_line_and_total_line}</td></tr>
+        <tr><td>${all_printers_link}</td><td>&nbsp;</td></tr>
       </table>
     </div>
     <div class="first">&nbsp;&nbsp;</div>
@@ -67,8 +75,17 @@ h1:after, h2:after
     </div>
   </div>
   <div class="clear"></div>
-  <h2>Snapshot picture</h2>
-  <img src="/capture.jpg"/></br>
+  <div class="captureParagraph">
+    <h2>Snapshot picture</h2>
+    ${capture_image_tag}</br>
+  </div>
+  <div class="commandsParagraph">
+    <h2>Commands</h2>
+    <div class="first"><form action="/pause" method="post"><input type="submit" value="Pause Printer"></form></div>
+    <div class="first"><form action="/resume" method="post"><input type="submit" value="Resume Printer"></form></div>
+    <div class="first"><form action="/abort" method="post"><input type="submit" value="Abort Print"></form></div>
+    <div class="last">&nbsp;</div>
+  </div>
 </body>
 </html>
 

@@ -68,9 +68,9 @@ public class ExtendedPrinterStatus {
             return OverallPrinterStatus.RESUMING;
         } else if (printerStatus.getPause() == PrinterPause.UNKNOWN) {
             return OverallPrinterStatus.UNKNOWN;
-        } else if (printerStatus.getPause() == PrinterPause.WORKING) {
+        } else if (printerStatus.getPause() == PrinterPause.NOT_PAUSED) {
             if (estimate == null) {
-                return OverallPrinterStatus.PRINTING_NO_ESTIMATE;
+                return OverallPrinterStatus.IDLE;
             } else if (estimate.getPrintStatus() == EstimateState.IDLE) {
                 return OverallPrinterStatus.IDLE;
             } else if (estimate.getPrintStatus() == EstimateState.NO_LINES) {

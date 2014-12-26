@@ -27,7 +27,7 @@ public class ResponseFactory {
 
     public static final int PRINTER_STATUS_RESPONSE = 0xe1;
     public static final int STANDARD_RESPONSE = 0xe3;
-    public static final int PRINTER_ID_RESPONSE = 0xe5;
+    public static final int PRINTER_DETAILS_RESPONSE = 0xe5;
 
     public static boolean DEBUG = false;
 
@@ -62,11 +62,18 @@ public class ResponseFactory {
             ptr = 0;
             readBuffer(in, buffer);
 
-        } else if (r == PRINTER_ID_RESPONSE) {
-            response = new PrinterIdResponse();
+        } else if (r == PRINTER_DETAILS_RESPONSE) {
+            response = new PrinterDetailsResponse();
             buffer = new byte[256];
-            extractString("printid", 256, TRIM_STRING_CONVERTER);
+            ptr = 0;
+            readBuffer(in, buffer);
 
+            extractString("model", 5, TRIM_STRING_CONVERTER);
+            extractString("serialNumber", 17, TRIM_STRING_CONVERTER);
+            skip(42);
+            extractString("printid", 100, TRIM_STRING_CONVERTER);
+            skip(86);
+            extractString("colour", 6, TRIM_STRING_CONVERTER);
         } else {
             return new UnknownResponse(r);
         }
@@ -118,6 +125,16 @@ public class ResponseFactory {
         set(value, propertyName, value.getClass());
     }
 
+    protected void extractBytes(String propertyName, int size, Converter<byte[], ?> converter) {
+        byte[] data = new byte[size];
+        System.arraycopy(buffer, ptr, data, 0, size);
+        ptr = ptr + size;
+
+        Object value = converter.convert(data);
+
+        set(value, propertyName, value.getClass());
+    }
+
     protected void set(Object value, String name, Class<?> cls) {
         Method setter = null;
         try {
@@ -159,6 +176,7 @@ public class ResponseFactory {
     public static NullStringConverter NULL_STRING_CONVERTER = new NullStringConverter();
     public static TrimStringConverter TRIM_STRING_CONVERTER = new TrimStringConverter();
     public static HexStringToInteger HEX_STRING_TO_INTEGER_CONVERTER = new HexStringToInteger();
+    public static HexStringToInteger STRING_TO_INTEGER_CONVERTER = new HexStringToInteger();
     public static StringToPrinterPause STRING_TO_PRINTER_PAUSE_CONVERTER = new StringToPrinterPause();
 
     public static ByteToBooleanConverter BYTE_TO_BOOLEAN_CONVERTER = new ByteToBooleanConverter();
@@ -180,6 +198,17 @@ public class ResponseFactory {
             int i = 0;
             try {
                 i = Integer.parseInt(source, 16);
+            } catch (NumberFormatException ignore) {
+            }
+            return i;
+        }
+    }
+
+    public static class StringToInteger implements Converter<String, Integer> {
+        public Integer convert(String source) {
+            int i = 0;
+            try {
+                i = Integer.parseInt(source);
             } catch (NumberFormatException ignore) {
             }
             return i;
