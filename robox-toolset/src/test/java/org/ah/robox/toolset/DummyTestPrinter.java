@@ -46,6 +46,11 @@ public class DummyTestPrinter implements Printer {
         printerStatusResponse.setLineNumber(220);
         printerStatusResponse.setPause(PrinterPause.NOT_PAUSED);
         printerStatusResponse.setBusy(true);
+        printerStatusResponse.setXPosition("10.002");
+        printerStatusResponse.setYPosition("20.003");
+        printerStatusResponse.setZPosition("5.004");
+        printerStatusResponse.setFilamentMultiplier("0.85");
+        printerStatusResponse.setFeedRateMultiplier("0.9");
     }
 
     public void close() {

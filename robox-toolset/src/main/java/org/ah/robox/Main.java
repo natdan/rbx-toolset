@@ -80,6 +80,8 @@ public class Main {
             }
         }
 
+        ResponseFactory.DEBUG = debugFlag;
+
         if ("help".equals(command) || command == null) {
             printHelp();
             System.exit(0);
@@ -136,8 +138,6 @@ public class Main {
                         System.exit(1);
                     }
                 }
-
-                ResponseFactory.DEBUG = debugFlag;
 
                 try {
                     if ("status".equals(command)) {

@@ -108,6 +108,7 @@ public class WebCommand {
             } else if (automaticRefrehsFlag) {
                 try {
                     webServer.setAutomaticRefresh(Integer.parseInt(a));
+                    automaticRefrehsFlag = false;
                 } catch (NumberFormatException e) {
                     System.err.println("Bad number for automatic refresh '" + a + "'");
                     System.exit(1);
@@ -487,6 +488,43 @@ public class WebCommand {
         System.out.println("                                 have no links associanted.");
         System.out.println("${automatic-refresh}           - tag for html head. It will be empty if -ar|--automatic-refresh");
         System.out.println("                                 option is not added. ");
+
+        System.out.println("${x_limit}       - x limit switch (on/off)");
+        System.out.println("${y_limit}       - y limit switch (on/off)");
+        System.out.println("${z_limit}       - z limit switch (on/off)");
+
+        System.out.println("${filament_1}    - filament 1 switch (on/off)");
+        System.out.println("${filament_2}    - filament 2 switch (on/off)");
+
+        System.out.println("${nozzle_switch} - nozzle switch (on/off)");
+        System.out.println("${door_open}   - door closed switch (on/off)");
+        System.out.println("${reel_button}   - reel button switch (on/off)");
+
+        System.out.println("${nozzle_temp}           - nozzle temperature");
+        System.out.println("${nozzle_set_temp}       - nozzle set temperature");
+        System.out.println("${nozzle_temp_combined}  - nozzle + nozzle set temperature divided by '/'");
+
+        System.out.println("${bed_temp}              - bed temperature");
+        System.out.println("${bed_set_temp}          - bed set temperature");
+        System.out.println("${nozzle_temp_combined}  - bed + bed set temperature divided by '/'");
+
+        System.out.println("${ambient_temp}          - ambient temperature");
+        System.out.println("${ambient_set_temp}      - ambient set temperature");
+        System.out.println("${ambient_temp_combined} - ambient temperature + ambient set temperature divided by '/");
+
+        System.out.println("${fan}           - fan (on/off)");
+        System.out.println("${head_Fan}      - head fan (on/off)");
+
+        System.out.println("${x_position}    - x position");
+        System.out.println("${y_position}    - y position");
+        System.out.println("${z_position}    - z position");
+
+        System.out.println("${filament_nultiplier}  - filament multiplier");
+        System.out.println("${feed_rate_nultiplier} - feed rate multiplier");
+
+        System.out.println("${temp_state}    - temperature state ('working', 'cooling', 'heating bed' or 'heating nozzles')");
+
         System.out.println("");
+
     }
 }

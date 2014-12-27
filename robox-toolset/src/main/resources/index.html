@@ -75,6 +75,38 @@ h1:after, h2:after
     </div>
   </div>
   <div class="clear"></div>
+  <div class="container">
+    <div class="first">
+      <table>
+        <tr><td>Door Open:&nbsp;</td><td>${door_open}</td></tr>
+        <tr><td>Fan:&nbsp;</td><td>${fan}</td></tr>
+        <tr><td>Head fan:&nbsp;</td><td>${head_fan}</td></tr>
+        <tr><td>Filament multiplier:&nbsp;</td><td>${filament_multiplier}</td></tr>
+        <tr><td>X:&nbsp;</td><td>${x_position}</td></tr>
+        <tr><td>Y:&nbsp;</td><td>${y_position}</td></tr>
+        <tr><td>Z:&nbsp;</td><td>${z_position}</td></tr>
+        <tr><td>Door Open:&nbsp;</td><td>${door_open}</td></tr>
+        <tr><td>Reel Button:&nbsp;</td><td>${reel_button}</td></tr>
+        <tr><td>Nozzle Switch:&nbsp;</td><td>${nozzle_switch}</td></tr>
+      </table>
+    </div>
+    <div class="last">
+      <table>
+        <tr><td>Bed (T):&nbsp;</td><td>${bed_temp_combined}</td></tr>
+        <tr><td>Ambient (T):&nbsp;</td><td>${ambient_temp_combined}</td></tr>
+        <tr><td>Nozzle (T):&nbsp;</td><td>${nozzle_temp_combined}</td></tr>
+        <tr><td>Feed Rate Multiplier:&nbsp;</td><td>${feed_rate_multiplier}</td></tr>
+        <tr><td>X limit:&nbsp;</td><td>${x_limit}</td></tr>
+        <tr><td>Y limit:&nbsp;</td><td>${y_limit}</td></tr>
+        <tr><td>Z limit:&nbsp;</td><td>${z_limit}</td></tr>
+        <tr><td>Filament 1 switch:&nbsp;</td><td>${filament_1}</td></tr>
+        <tr><td>Filament 2 switch:&nbsp;</td><td>${filament_2}</td></tr>
+        <tr><td>Heaters: &nbsp;</td><td>${temp_state}</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="clear"></div>
+
   <div class="captureParagraph">
     <h2>Snapshot picture</h2>
     ${capture_image_tag}</br>

@@ -55,6 +55,48 @@ public class ResponseFactory {
             extractString("pause", 1, STRING_TO_PRINTER_PAUSE_CONVERTER);
             extractByte("busy", BYTE_TO_BOOLEAN_CONVERTER);
 
+            extractByte("xLimit", BYTE_TO_BOOLEAN_CONVERTER);
+            extractByte("yLimit", BYTE_TO_BOOLEAN_CONVERTER);
+            extractByte("zLimit", BYTE_TO_BOOLEAN_CONVERTER);
+
+            extractByte("filament1", BYTE_TO_BOOLEAN_CONVERTER);
+            extractByte("filament2", BYTE_TO_BOOLEAN_CONVERTER);
+            extractByte("nozzleSwitch", BYTE_TO_BOOLEAN_CONVERTER);
+
+            extractByte("doorOpen", BYTE_TO_BOOLEAN_CONVERTER);
+            extractByte("reelButton", BYTE_TO_BOOLEAN_CONVERTER);
+            skip(4);
+
+            extractString("nozzleTemperature", 8, TRIM_STRING_CONVERTER);
+            extractString("nozzleSetTemperature", 8, TRIM_STRING_CONVERTER);
+
+            skip(9);
+
+            extractString("bedTemperature", 8, TRIM_STRING_CONVERTER);
+            extractString("bedSetTemperature", 8, TRIM_STRING_CONVERTER);
+
+            skip(8);
+            extractByte("fan", BYTE_TO_BOOLEAN_CONVERTER);
+
+            extractString("ambientTemperature", 8, TRIM_STRING_CONVERTER);
+            extractString("ambientSetTemperature", 8, TRIM_STRING_CONVERTER);
+
+            extractByte("headFan", BYTE_TO_BOOLEAN_CONVERTER);
+
+            extractString("temperatureState", 1, STRING_TO_TEMPERATURE_STATE_CONVERTER);
+
+            skip(3);
+
+            extractString("xPosition", 8, TRIM_STRING_CONVERTER);
+            extractString("yPosition", 8, TRIM_STRING_CONVERTER);
+            extractString("zPosition", 8, TRIM_STRING_CONVERTER);
+
+            skip(8); // Filament skip?
+
+            extractString("filamentMultiplier", 8, TRIM_STRING_CONVERTER);
+            extractString("feedRateMultiplier", 8, TRIM_STRING_CONVERTER);
+
+
         } else if (r == STANDARD_RESPONSE) {
             StandardResponse response = new StandardResponse();
             this.response = response;
@@ -71,7 +113,7 @@ public class ResponseFactory {
             extractString("model", 5, TRIM_STRING_CONVERTER);
             extractString("serialNumber", 17, TRIM_STRING_CONVERTER);
             skip(42);
-            extractString("printid", 100, TRIM_STRING_CONVERTER);
+            extractString("printerId", 100, TRIM_STRING_CONVERTER);
             skip(86);
             extractString("colour", 6, TRIM_STRING_CONVERTER);
         } else {
@@ -106,6 +148,7 @@ public class ResponseFactory {
     protected void extractString(String propertyName, int size, Converter<String, ?> converter) {
         try {
             String str = new String(buffer, ptr, size, "US-ASCII");
+            str = str.replace(Character.valueOf((char)127).toString(), "");
             ptr = ptr + size;
 
             Object value = converter.convert(str);
@@ -178,6 +221,7 @@ public class ResponseFactory {
     public static HexStringToInteger HEX_STRING_TO_INTEGER_CONVERTER = new HexStringToInteger();
     public static HexStringToInteger STRING_TO_INTEGER_CONVERTER = new HexStringToInteger();
     public static StringToPrinterPause STRING_TO_PRINTER_PAUSE_CONVERTER = new StringToPrinterPause();
+    public static StringToTemperatureState STRING_TO_TEMPERATURE_STATE_CONVERTER = new StringToTemperatureState();
 
     public static ByteToBooleanConverter BYTE_TO_BOOLEAN_CONVERTER = new ByteToBooleanConverter();
 
@@ -230,6 +274,24 @@ public class ResponseFactory {
             }
 
             throw new IllegalStateException("Unknown printer pause number: " + i);
+        }
+    }
+
+    public static class StringToTemperatureState implements Converter<String, TemperatureState> {
+        public TemperatureState convert(String source) {
+            int i = -1;
+            try {
+                i = Integer.parseInt(source, 16);
+            } catch (NumberFormatException ignore) {
+            }
+
+            for (TemperatureState value : TemperatureState.values()) {
+                if (value.getState() == i) {
+                    return value;
+                }
+            }
+
+            throw new IllegalStateException("Unknown temperature state number: " + i);
         }
     }
 

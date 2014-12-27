@@ -52,7 +52,7 @@ public class TemplateEngine {
                         + "<form action=\"/upload\" enctype=\"multipart/form-data\" method=\"post\">"
                         + "<input type=\"file\" name=\"file\"><input type=\"submit\" value=\"Send\"></form>";
             } else if (estimate.getPrintStatus() == EstimateState.PREPARING) {
-                e = "Too early to make estimate. Try again in a few moments.";
+                e = "Too early to make estimate.";
             }
         }
 
@@ -70,6 +70,77 @@ public class TemplateEngine {
         substitutions.put("estimate_hours", estimate != null ? estimate.getHours() : "");
         substitutions.put("estimate_mins", estimate != null ? estimate.getMinutes() : "");
         substitutions.put("estimate_secs", estimate != null ? estimate.getSeconds() : "");
+
+        if (ps != null) {
+            substitutions.put("x_limit", swtchToString(ps.isXLimit()));
+            substitutions.put("y_limit", swtchToString(ps.isXLimit()));
+            substitutions.put("z_limit", swtchToString(ps.isXLimit()));
+            substitutions.put("filament_1", swtchToString(ps.isFilament1()));
+            substitutions.put("filament_2", swtchToString(ps.isFilament2()));
+
+            substitutions.put("nozzle_switch", swtchToString(ps.isNozzleSwitch()));
+            substitutions.put("door_open", swtchToString(ps.isDoorOpen()));
+            substitutions.put("reel_button", swtchToString(ps.isReelButton()));
+
+            substitutions.put("nozzle_temp", ps.getNozzleTemperature());
+            substitutions.put("nozzle_set_temp", ps.getNozzleSetTemperature());
+            substitutions.put("nozzle_temp_combined", ps.getNozzleTemperature() + " / " + ps.getNozzleSetTemperature());
+
+            substitutions.put("bed_temp", ps.getBedTemperature());
+            substitutions.put("bed_set_temp", ps.getBedSetTemperature());
+            substitutions.put("bed_temp_combined", ps.getBedTemperature() + " / " + ps.getBedSetTemperature());
+
+            substitutions.put("ambient_temp", ps.getAmbientTemperature());
+            substitutions.put("ambient_set_temp", ps.getAmbientSetTemperature());
+            substitutions.put("ambient_temp_combined", ps.getAmbientTemperature() + " / " + ps.getAmbientSetTemperature());
+
+            substitutions.put("fan", swtchToString(ps.isFan()));
+            substitutions.put("head_fan", swtchToString(ps.isHeadFan()));
+
+            substitutions.put("x_position", ps.getXPosition());
+            substitutions.put("y_position", ps.getYPosition());
+            substitutions.put("z_position", ps.getZPosition());
+
+            substitutions.put("filament_multiplier", ps.getFilamentMultiplier());
+            substitutions.put("feed_rate_multiplier", ps.getFeedRateMultiplier());
+
+            substitutions.put("temp_state", ps.getTemperatureState().getText());
+        } else {
+            substitutions.put("x_limit", "");
+            substitutions.put("y_limit", "");
+            substitutions.put("z_limit", "");
+
+            substitutions.put("filament_1", "");
+            substitutions.put("filament_2", "");
+
+            substitutions.put("nozzle_switch", "");
+            substitutions.put("door_open", "");
+            substitutions.put("reel_button", "");
+
+            substitutions.put("nozzle_temp", "");
+            substitutions.put("nozzle_set_temp", "");
+            substitutions.put("nozzle_temp_combined", "");
+
+            substitutions.put("bed_temp", "");
+            substitutions.put("bed_set_temp", "");
+            substitutions.put("bed_temp_combined", "");
+
+            substitutions.put("ambient_temp", "");
+            substitutions.put("ambient_set_temp", "");
+            substitutions.put("ambient_temp_combined", "");
+
+            substitutions.put("fan", "");
+            substitutions.put("head_fan", "");
+
+            substitutions.put("x_position", "");
+            substitutions.put("y_position", "");
+            substitutions.put("z_position", "");
+
+            substitutions.put("filament_multiplier", "");
+            substitutions.put("feed_rate_multiplier", "");
+
+            substitutions.put("temp_state", "");
+        }
         substitutions.put("current_line", currentLines);
         substitutions.put("total_lines", totalLines);
         substitutions.put("current_line_and_total_line", currentLines + (hasTotalLines ? "&nbsp;/&nbsp;" + totalLines : ""));
@@ -80,6 +151,14 @@ public class TemplateEngine {
         substitutions.put("commands_css_display", webServer.isAllowCommandsFlag() ? "inline" : "none");
         substitutions.put("automatic-refresh", webServer.getAutomaticRefrehs() >= 0 ? "<meta http-equiv=\"refresh\" content=\"" + webServer.getAutomaticRefrehs() + "\" >" : "");
         return template(page, substitutions);
+    }
+
+    /**
+     * @param headFan
+     * @return
+     */
+    private static String swtchToString(boolean b) {
+        if (b) { return "on"; } else { return "off"; }
     }
 
     public static String template2(String page, WebServer webServer, ExtendedPrinterStatus status, String errorMsg) {

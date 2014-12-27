@@ -45,7 +45,7 @@ public class TwoDummyPrintersWebServer {
 
         WebServer webServer = new WebServer(printerDiscovery);
         webServer.setAllowCommandsFlag(true);
-        webServer.setAutomaticRefresh(2);
+        webServer.setAutomaticRefresh(10);
         webServer.setImageCommand("cat /Users/daniel/image.jpg");
         webServer.setPort(8100);
         webServer.init();

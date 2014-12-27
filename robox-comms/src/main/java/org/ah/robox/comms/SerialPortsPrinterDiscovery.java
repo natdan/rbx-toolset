@@ -171,8 +171,14 @@ public class SerialPortsPrinterDiscovery implements PrinterDiscovery {
     public Printer getPrinterForChannel(PrinterChannel printerChannel) {
         Printer printer = printers.get(printerChannel);
         if (printer == null) {
-            printer = new RoboxPrinter(printerChannel);
-            printers.put(printerChannel, printer);
+            RoboxPrinter p = new RoboxPrinter(printerChannel);
+            try {
+                p.init();
+                printer = p;
+                printers.put(printerChannel, printer);
+            } catch (IOException e) {
+                System.err.println("Failed to initialise printer on path " + printerChannel.getPrinterPath());
+            }
         }
         return printer;
     }

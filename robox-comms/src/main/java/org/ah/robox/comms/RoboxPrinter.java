@@ -48,6 +48,9 @@ public class RoboxPrinter implements Printer {
             printerDetails = (PrinterDetailsResponse)response;
 
             printerId = printerDetails.getSerialNumber();
+            if (printerId == null || "".equals(printerId)) {
+                printerId = printerChannel.getPrinterPath().replace('/', '_').replace('\\', '_');
+            }
         } else {
             throw new UnexpectedPrinterResponse(response);
         }

@@ -290,6 +290,32 @@ Template file should have following placeholders:
                                  have no links associanted.
 - ${automatic-refresh}           - tag for html head. It will be empty if -ar|--automatic-refresh
                                  option is not added. 
+- ${x_limit}       - x limit switch (on/off)
+- ${y_limit}       - y limit switch (on/off)
+- ${z_limit}       - z limit switch (on/off)
+- ${filament_1}    - filament 1 switch (on/off)
+- ${filament_2}    - filament 2 switch (on/off)
+- ${nozzle_switch} - nozzle switch (on/off)
+- ${door_Closed}   - door closed switch (on/off)
+- ${reel_button}   - reel button switch (on/off)
+- ${nozzle_temp}           - nozzle temperature
+- ${nozzle_set_temp}       - nozzle set temperature
+- ${nozzle_temp_combined}  - nozzle + nozzle set temperature divided by '/'
+- ${bed_temp}              - bed temperature
+- ${bed_set_temp}          - bed set temperature
+- ${nozzle_temp_combined}  - bed + bed set temperature divided by '/'
+- ${ambient_temp}          - ambient temperature
+- ${ambient_set_temp}      - ambient set temperature
+- ${ambient_temp_combined} - ambient temperature + ambient set temperature divided by '/
+- ${fan}           - fan (on/off)
+- ${head_Fan}      - head fan (on/off)
+- ${x_position}    - x position
+- ${y_position}    - y position
+- ${z_position}    - z position
+- ${filament_nultiplier}  - filament multiplier
+- ${feed_rate_nultiplier} - feed rate multiplier
+- ${temp_state}    - temperature state ('working', 'cooling', 'heating bed' or 'heating nozzles')
+
 
 Example how to start server:
 ```
