@@ -71,7 +71,7 @@ public class SharedLibraries {
                 if (!is64Bit) {
                     loadLibrary("osx/lib" + name + ".jnilib");
                 } else {
-                    loadLibrary("osx/lib" + name + "64.jnilib");
+                    loadLibrary("osx/lib" + name + ".jnilib");
                 }
             }
         } catch (IOException e) {

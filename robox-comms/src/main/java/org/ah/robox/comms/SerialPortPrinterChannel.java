@@ -55,7 +55,9 @@ public class SerialPortPrinterChannel implements PrinterChannel {
     public void close() {
         try { in.close(); } catch (Exception ignore) {}
         try { out.close(); } catch (Exception ignore) {}
-        serialPort.close();
+        if (!System.getProperty("os.name").contains("Mac")) {
+            serialPort.close(); // Bad hack until versions of rxtx is sorted.
+        }
         parent.closed(this);
     }
 

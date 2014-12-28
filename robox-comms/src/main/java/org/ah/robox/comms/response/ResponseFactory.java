@@ -28,6 +28,7 @@ public class ResponseFactory {
     public static final int PRINTER_STATUS_RESPONSE = 0xe1;
     public static final int STANDARD_RESPONSE = 0xe3;
     public static final int PRINTER_DETAILS_RESPONSE = 0xe5;
+    public static final int GCODE_RESPONSE = 0xe7;
 
     public static boolean DEBUG = false;
 
@@ -104,6 +105,19 @@ public class ResponseFactory {
             ptr = 0;
             readBuffer(in, buffer);
 
+            skip(3);
+
+            extractByte("tooLongLine", BYTE_TO_BOOLEAN_CONVERTER);
+
+            skip(2);
+
+            extractByte("unknownCommand", BYTE_TO_BOOLEAN_CONVERTER);
+
+            skip(3);
+
+            extractByte("bufferOverFlow", BYTE_TO_BOOLEAN_CONVERTER);
+
+
         } else if (r == PRINTER_DETAILS_RESPONSE) {
             response = new PrinterDetailsResponse();
             buffer = new byte[256];
@@ -116,6 +130,18 @@ public class ResponseFactory {
             extractString("printerId", 100, TRIM_STRING_CONVERTER);
             skip(86);
             extractString("colour", 6, TRIM_STRING_CONVERTER);
+        } else if (r == GCODE_RESPONSE) {
+            response = new GCodeResponse();
+            buffer = new byte[4];
+            ptr = 0;
+            readBuffer(in, buffer);
+
+            int packetSize = Integer.valueOf(new String(buffer, "US-ASCII"), 16);
+
+            buffer = new byte[packetSize];
+            readBuffer(in, buffer);
+
+            ((GCodeResponse)response).setResponse(new String(buffer, "US-ASCII"));
         } else {
             return new UnknownResponse(r);
         }

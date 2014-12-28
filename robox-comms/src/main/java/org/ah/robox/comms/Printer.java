@@ -14,6 +14,7 @@ package org.ah.robox.comms;
 
 import java.io.IOException;
 
+import org.ah.robox.comms.response.GCodeResponse;
 import org.ah.robox.comms.response.PrinterStatusResponse;
 import org.ah.robox.comms.response.StandardResponse;
 
@@ -37,10 +38,16 @@ public interface Printer {
 
     PrinterStatusResponse getPrinterStatus() throws IOException;
 
+    StandardResponse reportErrors() throws IOException;
+
+    StandardResponse resetErrors() throws IOException;
+
     StandardResponse pausePrinter() throws IOException;
 
     StandardResponse resumePrinter() throws IOException;
 
     StandardResponse abortPrint() throws IOException;
+
+    GCodeResponse sendGCode(String gcode) throws IOException;
 
 }

@@ -15,7 +15,7 @@ Until implemented as another command ('install' command) the easiest way of invo
 ```
 #!/bin/bash
 
-java -jar <path-to-jar>/robox-toolset.jar $@
+java -jar <path-to-jar>/robox-toolset.jar "$@"
 ```
 
 for Unix bases machines or similar for Windows machines where .bat file should be in the PATH. 
@@ -329,4 +329,27 @@ rbx web stop
 
 Note: On Raspberry Pi, web command is going to automatically detect existence of /usr/bin/raspistill command and add it as if ```--image-command /usr/bin/raspistill``` was supplied to the command. In order to deliberately not use it you need to specify ```--image-command ""```.
 
+GCode
+-----
 
+This command is sending gcode directly to the printer. Usage:
+
+```
+Usage: rbx [<general-options>] gcode [<specific-options>] [<gcode-commands>]
+
+  General options are one of these:
+  -v | --verbose   - increases voutput erbosity level
+  -d | --debug     - increases debug level
+  -p | --printer   - if more than one printer is connected to your
+                     computer you must select which one command is
+                     going to be applied on. You can get list of
+                     available printers using 'list' command
+
+  Specific options are:
+
+  -h | --help | -?     - this page
+```
+All arguments that do not start with '-' will be processed as gcode commands
+and sent to the printer. Also, all sysin will be processed line by line and
+sent to the printer. Resposes are prefixed with 'A' + number of argument + ': '
+sent out or 'L' + number of line from sysin + ': ' (note trailing space).

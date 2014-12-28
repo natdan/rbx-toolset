@@ -19,6 +19,40 @@
       <artifactId>rxtx</artifactId>
       <version>2.2pre2</version>
     </dependency>
+<!--     <dependency>
+      <groupId>gnu.io.rxtx</groupId>
+      <artifactId>rxtxSerial</artifactId>
+      <version>2.2pre2</version>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/libs/RXTXcomm-2.2pre2.jar</systemPath>
+      <systemPath>${project.basedir}/libs/RXTXcomm-bin-2.2pre2.jar</systemPath>
+      <systemPath>${project.basedir}/libs/rxtx-2.2pre2.jar</systemPath>
+    </dependency>
+ -->
+<!--     <dependency>
+      <groupId>gnu.io.rxtx</groupId>
+      <artifactId>rxtx-api</artifactId>
+      <version>2.2-stabilize-SNAPSHOT</version>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/libs/rxtx-api-2.2-stabilize-SNAPSHOT.jar</systemPath>
+    </dependency>
+    
+    <dependency>
+      <groupId>gnu.io.rxtx</groupId>
+      <artifactId>rxtxSerial-java</artifactId>
+      <version>2.2-stabilize-SNAPSHOT</version>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/libs/rxtxSerial-java-2.2-stabilize-SNAPSHOT.jar</systemPath>
+    </dependency>
+ -->
+<!--     <dependency>
+      <groupId>gnu.io.rxtx</groupId>
+      <artifactId>rxtxSerial-bin</artifactId>
+      <version>2.2-stabilize-SNAPSHOT</version>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/libs/rxtxSerial-bin-2.2-stabilize-SNAPSHOT.jar</systemPath>
+    </dependency>
+ -->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>

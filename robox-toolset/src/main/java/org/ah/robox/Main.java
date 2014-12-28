@@ -73,6 +73,9 @@ public class Main {
             } else if ("web".equals(arg)) {
                 command = "web";
                 furtherArgsFlag = true;
+            } else if ("gcode".equals(arg)) {
+                command = "gcode";
+                furtherArgsFlag = true;
             } else {
                 System.err.println("Unknown option: '" + arg + "'");
                 printHelp();
@@ -148,6 +151,8 @@ public class Main {
                         ResumePrinterCommand.execute(selectedPrinter, furtherArgs);
                     } else if ("abort".equals(command)) {
                         AbortPrintCommand.execute(selectedPrinter, furtherArgs);
+                    } else if ("gcode".equals(command)) {
+                        GCodeCommand.execute(selectedPrinter, furtherArgs);
                     }
                 } finally {
                     if (selectedPrinter != null) {
@@ -189,6 +194,7 @@ public class Main {
         System.out.println("  resume   - resumes current print if there's one");
         System.out.println("  abort    - aborts current print if there's one");
         System.out.println("  upload   - sets print file for status command");
+        System.out.println("  gcode    - sends gcode command to the printer");
         System.out.println("");
         System.out.println("  Tip: further help can be obtained if '-h'/'-?'/'--help; is specified");
         System.out.println("  after commmand. Example: ");

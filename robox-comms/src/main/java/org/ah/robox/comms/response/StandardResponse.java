@@ -18,4 +18,28 @@ package org.ah.robox.comms.response;
 */
 public class StandardResponse implements Response {
 
+    private boolean tooLongLine;
+    private boolean unknownCommand;
+    private boolean bufferOverFlow;
+
+    public boolean isTooLongLine() {
+        return tooLongLine;
+    }
+    public void setTooLongLine(boolean tooLongLine) {
+        this.tooLongLine = tooLongLine;
+    }
+    public boolean isUnknownCommand() {
+        return unknownCommand;
+    }
+    public void setUnknownCommand(boolean unknownCommand) {
+        this.unknownCommand = unknownCommand;
+    }
+    public boolean isBufferOverFlow() {
+        return bufferOverFlow;
+    }
+    public void setBufferOverFlow(boolean bufferOverFlow) {
+        this.bufferOverFlow = bufferOverFlow;
+    }
+
+
 }

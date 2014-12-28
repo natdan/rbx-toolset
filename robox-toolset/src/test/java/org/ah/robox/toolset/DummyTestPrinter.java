@@ -16,6 +16,7 @@ import java.io.IOException;
 
 import org.ah.robox.comms.Printer;
 import org.ah.robox.comms.PrinterChannel;
+import org.ah.robox.comms.response.GCodeResponse;
 import org.ah.robox.comms.response.PrinterPause;
 import org.ah.robox.comms.response.PrinterStatusResponse;
 import org.ah.robox.comms.response.StandardResponse;
@@ -109,5 +110,17 @@ public class DummyTestPrinter implements Printer {
 
     public String getSerialNumber() {
         return serialNumber;
+    }
+
+    public GCodeResponse sendGCode(String gcode) throws IOException {
+        return null;
+    }
+
+    public StandardResponse reportErrors() throws IOException {
+        return null;
+    }
+
+    public StandardResponse resetErrors() throws IOException {
+        return null;
     }
 }
