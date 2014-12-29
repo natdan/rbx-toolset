@@ -15,15 +15,14 @@ package org.ah.robox;
 import java.util.List;
 
 import org.ah.robox.comms.Printer;
-import org.ah.robox.comms.response.StandardResponse;
+import org.ah.robox.comms.response.PrintJobsResponse;
 
 /**
  *
  *
  * @author Daniel Sendula
  */
-public class ResumePrinterCommand {
-
+public class GetPrintJobsCommand {
     public static void execute(Printer printer, List<String> args) throws Exception {
         for (String a : args) {
             if ("-?".equals(a) || "-h".equals(a) || "--help".equals(a)) {
@@ -36,12 +35,21 @@ public class ResumePrinterCommand {
             }
         }
 
-        StandardResponse response = printer.resumePrinter();
-        Main.processStandardResponse(printer, response);
+        PrintJobsResponse response = printer.getPrintJobs();
+
+        if (response.getPrintJobs().size() == 0) {
+            System.err.println("There are no print jobs");
+        } else {
+            int i = 1;
+            for (String printJob : response.getPrintJobs()) {
+                System.out.println(i + ": " + printJob);
+                i = i + 1;
+            }
+        }
     }
 
     public static void printHelp() {
-        System.out.println("Usage: rbx [<general-options>] resume [<specific-options>]");
+        System.out.println("Usage: rbx [<general-options>] jobs [<specific-options>]");
         System.out.println("");
         Main.printGeneralOptions();
         System.out.println("");

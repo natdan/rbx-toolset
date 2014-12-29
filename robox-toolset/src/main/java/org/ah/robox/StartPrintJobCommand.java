@@ -22,29 +22,42 @@ import org.ah.robox.comms.response.StandardResponse;
  *
  * @author Daniel Sendula
  */
-public class ResumePrinterCommand {
-
+public class StartPrintJobCommand {
     public static void execute(Printer printer, List<String> args) throws Exception {
+        String printJobId = null;
         for (String a : args) {
             if ("-?".equals(a) || "-h".equals(a) || "--help".equals(a)) {
                 printHelp();
                 System.exit(0);
-            } else {
+            } else if (a.startsWith("-")) {
                 System.err.println("Unknown option: '" + a + "'");
                 printHelp();
                 System.exit(1);
+            } else if (printJobId == null) {
+                printJobId = a;
+            } else {
+                System.err.println("Only one print job id argument is allowed.");
+                System.exit(1);
             }
         }
+        if (printJobId == null) {
+            System.err.println("You must specify print job id parameter.");
+            System.exit(1);
+        }
 
-        StandardResponse response = printer.resumePrinter();
+        if (Main.verboseFlag) {
+            System.out.println("Starting job " + printJobId);
+        }
+        StandardResponse response = printer.startPrint(printJobId);
         Main.processStandardResponse(printer, response);
     }
 
     public static void printHelp() {
-        System.out.println("Usage: rbx [<general-options>] resume [<specific-options>]");
+        System.out.println("Usage: rbx [<general-options>] start [<specific-options>] <print-job-id>");
         System.out.println("");
         Main.printGeneralOptions();
         System.out.println("");
         Main.printSpecificOptions();
     }
+
 }

@@ -25,6 +25,7 @@ import org.ah.robox.comms.utils.PrintHex;
  */
 public class ResponseFactory {
 
+    public static final int GET_PRINT_JOBS_RESPONSE = 0xe0;
     public static final int PRINTER_STATUS_RESPONSE = 0xe1;
     public static final int STANDARD_RESPONSE = 0xe3;
     public static final int PRINTER_DETAILS_RESPONSE = 0xe5;
@@ -105,18 +106,31 @@ public class ResponseFactory {
             ptr = 0;
             readBuffer(in, buffer);
 
-            skip(3);
-
+            extractByte("error1", BYTE_TO_BOOLEAN_CONVERTER);
+            extractByte("sequenceError", BYTE_TO_BOOLEAN_CONVERTER);
+            extractByte("fileTooLargeError", BYTE_TO_BOOLEAN_CONVERTER);
             extractByte("tooLongLine", BYTE_TO_BOOLEAN_CONVERTER);
 
-            skip(2);
+            extractByte("error5", BYTE_TO_BOOLEAN_CONVERTER);
+            extractByte("error6", BYTE_TO_BOOLEAN_CONVERTER);
 
             extractByte("unknownCommand", BYTE_TO_BOOLEAN_CONVERTER);
 
-            skip(3);
+            extractByte("error8", BYTE_TO_BOOLEAN_CONVERTER);
+            extractByte("error9", BYTE_TO_BOOLEAN_CONVERTER);
+            extractByte("error10", BYTE_TO_BOOLEAN_CONVERTER);
 
             extractByte("bufferOverFlow", BYTE_TO_BOOLEAN_CONVERTER);
 
+            extractByte("error12", BYTE_TO_BOOLEAN_CONVERTER);
+            extractByte("error13", BYTE_TO_BOOLEAN_CONVERTER);
+            extractByte("error14", BYTE_TO_BOOLEAN_CONVERTER);
+            extractByte("error15", BYTE_TO_BOOLEAN_CONVERTER);
+            extractByte("error16", BYTE_TO_BOOLEAN_CONVERTER);
+            extractByte("error17", BYTE_TO_BOOLEAN_CONVERTER);
+            extractByte("error18", BYTE_TO_BOOLEAN_CONVERTER);
+            extractByte("error19", BYTE_TO_BOOLEAN_CONVERTER);
+            extractByte("error20", BYTE_TO_BOOLEAN_CONVERTER);
 
         } else if (r == PRINTER_DETAILS_RESPONSE) {
             response = new PrinterDetailsResponse();
@@ -142,6 +156,23 @@ public class ResponseFactory {
             readBuffer(in, buffer);
 
             ((GCodeResponse)response).setResponse(new String(buffer, "US-ASCII"));
+        } else if (r == GET_PRINT_JOBS_RESPONSE) {
+            PrintJobsResponse printJobsResponse = new PrintJobsResponse();
+            response = printJobsResponse;
+            buffer = new byte[2];
+            readBuffer(in, buffer);
+
+            int printJobs = Integer.valueOf(new String(buffer, "US-ASCII"), 16);
+
+            buffer = new byte[printJobs * 16];
+            readBuffer(in, buffer);
+
+            for (int i = 0; i < printJobs; i++) {
+                String printJob = new String(buffer, i * 16, 16, "US-ASCII");
+                printJob = TRIM_STRING_CONVERTER.convert(printJob);
+                printJobsResponse.getPrintJobs().add(printJob);
+            }
+
         } else {
             return new UnknownResponse(r);
         }
@@ -160,7 +191,6 @@ public class ResponseFactory {
             System.out.println("Received packet:");
             PrintHex.printHex(buffer);
         }
-
     }
 
     protected void skip(int size) {

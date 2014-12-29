@@ -37,7 +37,7 @@ public class PausePrinterCommand {
         }
 
         StandardResponse response = printer.pausePrinter();
-        Main.processStandardResponse(response);
+        Main.processStandardResponse(printer, response);
     }
 
     public static void printHelp() {

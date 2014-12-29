@@ -353,3 +353,67 @@ All arguments that do not start with '-' will be processed as gcode commands
 and sent to the printer. Also, all sysin will be processed line by line and
 sent to the printer. Resposes are prefixed with 'A' + number of argument + ': '
 sent out or 'L' + number of line from sysin + ': ' (note trailing space).
+
+Jobs
+----
+
+Lists print jobs stored on the printer. They can be started using 'start' command. Usage:
+```
+Usage: rbx [<general-options>] jobs [<specific-options>]
+
+  General options are one of these:
+  -v | --verbose   - increases voutput erbosity level
+  -d | --debug     - increases debug level
+  -p | --printer   - if more than one printer is connected to your
+                     computer you must select which one command is
+                     going to be applied on. You can get list of
+                     available printers using 'list' command
+
+  Specific options are:
+
+  -h | --help | -?     - this page
+```
+
+Send
+----
+
+Sends gcode (file) to the printer as a print job. It is, then stored for later use. Job can be started using 'start' comamnd or -p/--initiate-print option. Usage:
+```
+Usage: rbx [<general-options>] send [<specific-options>]
+
+  General options are one of these:
+  -v | --verbose   - increases voutput erbosity level
+  -d | --debug     - increases debug level
+  -p | --printer   - if more than one printer is connected to your
+                     computer you must select which one command is
+                     going to be applied on. You can get list of
+                     available printers using 'list' command
+
+  Specific options are:
+
+  -h | --help | -?     - this page
+  -f | --file          - gcode file. Mandatory option.
+  -id | --print-job-id - job id. If not specified random one
+                         is going to be generated.
+  -p | --initiate-print - print is going to be started as well,
+                          like start command is invoked.
+```
+
+Start
+-----
+Starts existing job on the printer. Use 'jobs' command to see what jobs are available. Usage:
+```
+Usage: rbx [<general-options>] start [<specific-options>] <print-job-id>
+
+  General options are one of these:
+  -v | --verbose   - increases voutput erbosity level
+  -d | --debug     - increases debug level
+  -p | --printer   - if more than one printer is connected to your
+                     computer you must select which one command is
+                     going to be applied on. You can get list of
+                     available printers using 'list' command
+
+  Specific options are:
+
+  -h | --help | -?     - this page
+ ```

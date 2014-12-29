@@ -13,8 +13,10 @@
 package org.ah.robox.comms;
 
 import java.io.IOException;
+import java.io.Reader;
 
 import org.ah.robox.comms.response.GCodeResponse;
+import org.ah.robox.comms.response.PrintJobsResponse;
 import org.ah.robox.comms.response.PrinterStatusResponse;
 import org.ah.robox.comms.response.StandardResponse;
 
@@ -50,4 +52,9 @@ public interface Printer {
 
     GCodeResponse sendGCode(String gcode) throws IOException;
 
+    StandardResponse startPrint(String printJob) throws IOException;
+
+    PrintJobsResponse getPrintJobs() throws IOException;
+
+    StandardResponse transmitPrintJob(String printJobId, Reader gcodeReader, TransmitCallback callback) throws IOException;
 }

@@ -12,6 +12,7 @@
  *******************************************************************************/
 package org.ah.robox;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -75,6 +76,15 @@ public class Main {
                 furtherArgsFlag = true;
             } else if ("gcode".equals(arg)) {
                 command = "gcode";
+                furtherArgsFlag = true;
+            } else if ("send".equals(arg)) {
+                command = "send";
+                furtherArgsFlag = true;
+            } else if ("jobs".equals(arg)) {
+                command = "jobs";
+                furtherArgsFlag = true;
+            } else if ("start".equals(arg)) {
+                command = "start";
                 furtherArgsFlag = true;
             } else {
                 System.err.println("Unknown option: '" + arg + "'");
@@ -153,6 +163,12 @@ public class Main {
                         AbortPrintCommand.execute(selectedPrinter, furtherArgs);
                     } else if ("gcode".equals(command)) {
                         GCodeCommand.execute(selectedPrinter, furtherArgs);
+                    } else if ("send".equals(command)) {
+                        SendPrintJobCommand.execute(selectedPrinter, furtherArgs);
+                    } else if ("jobs".equals(command)) {
+                        GetPrintJobsCommand.execute(selectedPrinter, furtherArgs);
+                    } else if ("start".equals(command)) {
+                        StartPrintJobCommand.execute(selectedPrinter, furtherArgs);
                     }
                 } finally {
                     if (selectedPrinter != null) {
@@ -195,6 +211,9 @@ public class Main {
         System.out.println("  abort    - aborts current print if there's one");
         System.out.println("  upload   - sets print file for status command");
         System.out.println("  gcode    - sends gcode command to the printer");
+        System.out.println("  send     - creates a print job and send gcode (file) it to the printer");
+        System.out.println("  start    - starts print job that is already in the printer");
+        System.out.println("  jobs     - lists jobs stored on ther printer");
         System.out.println("");
         System.out.println("  Tip: further help can be obtained if '-h'/'-?'/'--help; is specified");
         System.out.println("  after commmand. Example: ");
@@ -203,8 +222,57 @@ public class Main {
     }
 
     /**
+     * @param printer TODO
      * @param response
+     * @throws IOException
      */
-    public static void processStandardResponse(StandardResponse response) {
+    public static void processStandardResponse(Printer printer, StandardResponse response) throws IOException {
+        if (response.isBufferOverFlow()) {
+            System.err.println("ERR: Buffer overflow.");
+        } else if (response.isTooLongLine()) {
+            System.err.println("ERR: Line too long.");
+        } else if (response.isUnknownCommand()) {
+            System.err.println("ERR: Unknown command.");
+        } else if (response.isSequenceError()) {
+            System.err.println("ERR: Sequence error.");
+        } else if (response.isFileTooLargeError()) {
+            System.err.println("ERR: File too large error.");
+        } else if (response.isError1()) {
+            System.err.println("ERR: error code 1.");
+        } else if (response.isError5()) {
+            System.err.println("ERR: error code 5.");
+        } else if (response.isError6()) {
+            System.err.println("ERR: error code 6.");
+        } else if (response.isError8()) {
+            System.err.println("ERR: error code 8.");
+        } else if (response.isError9()) {
+            System.err.println("ERR: error code 9.");
+        } else if (response.isError10()) {
+            System.err.println("ERR: error code 10.");
+        } else if (response.isError12()) {
+            System.err.println("ERR: error code 12.");
+        } else if (response.isError13()) {
+            System.err.println("ERR: error code 13.");
+        } else if (response.isError14()) {
+            System.err.println("ERR: error code 14.");
+        } else if (response.isError15()) {
+            System.err.println("ERR: error code 15.");
+        } else if (response.isError16()) {
+            System.err.println("ERR: error code 16.");
+        } else if (response.isError17()) {
+            System.err.println("ERR: error code 17.");
+        } else if (response.isError18()) {
+            System.err.println("ERR: error code 18.");
+        } else if (response.isError19()) {
+            System.err.println("ERR: error code 19.");
+        } else if (response.isError20()) {
+            System.err.println("ERR: error code 20.");
+        }
+        if (response.isError()) {
+            StandardResponse standardResponse = printer.resetErrors();
+            if (standardResponse.isError()) {
+                System.err.println("*** Cannot clear error!");
+            }
+        }
     }
 }

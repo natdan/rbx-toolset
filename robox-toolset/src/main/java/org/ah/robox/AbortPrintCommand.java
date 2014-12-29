@@ -37,7 +37,7 @@ public class AbortPrintCommand {
         }
 
         StandardResponse response = printer.abortPrint();
-        Main.processStandardResponse(response);
+        Main.processStandardResponse(printer, response);
     }
 
     public static void printHelp() {

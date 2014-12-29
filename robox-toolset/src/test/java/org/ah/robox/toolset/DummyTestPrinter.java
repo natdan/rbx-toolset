@@ -13,10 +13,13 @@
 package org.ah.robox.toolset;
 
 import java.io.IOException;
+import java.io.Reader;
 
 import org.ah.robox.comms.Printer;
 import org.ah.robox.comms.PrinterChannel;
+import org.ah.robox.comms.TransmitCallback;
 import org.ah.robox.comms.response.GCodeResponse;
+import org.ah.robox.comms.response.PrintJobsResponse;
 import org.ah.robox.comms.response.PrinterPause;
 import org.ah.robox.comms.response.PrinterStatusResponse;
 import org.ah.robox.comms.response.StandardResponse;
@@ -121,6 +124,18 @@ public class DummyTestPrinter implements Printer {
     }
 
     public StandardResponse resetErrors() throws IOException {
+        return null;
+    }
+
+    public StandardResponse startPrint(String printJob) throws IOException {
+        return null;
+    }
+
+    public PrintJobsResponse getPrintJobs() throws IOException {
+        return null;
+    }
+
+    public StandardResponse transmitPrintJob(String printJobId, Reader gcode, TransmitCallback callback) throws IOException {
         return null;
     }
 }
