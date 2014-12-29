@@ -232,7 +232,7 @@ public class WebCommand {
                         fw.close();
                     }
 
-                    System.out.println("Started web server at " + webServer.getAddress());
+                    System.out.println("Started web server at " + webServer.getAddress().getHostName() + ":" + webServer.getPort());
                     boolean stop = false;
                     while (!stop) {
                         try {

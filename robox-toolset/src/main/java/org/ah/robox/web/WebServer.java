@@ -80,7 +80,7 @@ public class WebServer {
             imageCache.setImageCommand(imageCommand);
         }
 
-        InetSocketAddress address = new InetSocketAddress(port);
+        address = new InetSocketAddress(port);
 
         if (Main.verboseFlag) {
             System.out.println("Starting web server at " + address);
