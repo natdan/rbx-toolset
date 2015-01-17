@@ -48,7 +48,7 @@ public class ResponseFactory {
 
         if (r == PRINTER_STATUS_RESPONSE) {
             response = new PrinterStatusResponse();
-            buffer = new byte[165];
+            buffer = new byte[210];
             ptr = 0;
             readBuffer(in, buffer);
 
@@ -67,12 +67,15 @@ public class ResponseFactory {
 
             extractByte("doorOpen", BYTE_TO_BOOLEAN_CONVERTER);
             extractByte("reelButton", BYTE_TO_BOOLEAN_CONVERTER);
-            skip(4);
+            skip(5);
+            skip(1);
 
             extractString("nozzleTemperature", 8, TRIM_STRING_CONVERTER);
             extractString("nozzleSetTemperature", 8, TRIM_STRING_CONVERTER);
 
             skip(9);
+
+            skip(25);
 
             extractString("bedTemperature", 8, TRIM_STRING_CONVERTER);
             extractString("bedSetTemperature", 8, TRIM_STRING_CONVERTER);
@@ -87,15 +90,18 @@ public class ResponseFactory {
 
             extractString("temperatureState", 1, STRING_TO_TEMPERATURE_STATE_CONVERTER);
 
-            skip(3);
+            skip(5);
 
             extractString("xPosition", 8, TRIM_STRING_CONVERTER);
             extractString("yPosition", 8, TRIM_STRING_CONVERTER);
             extractString("zPosition", 8, TRIM_STRING_CONVERTER);
 
-            skip(8); // Filament skip?
+            skip(8);
 
+            skip(8);
             extractString("filamentMultiplier", 8, TRIM_STRING_CONVERTER);
+            skip(8);
+            skip(8);
             extractString("feedRateMultiplier", 8, TRIM_STRING_CONVERTER);
 
 

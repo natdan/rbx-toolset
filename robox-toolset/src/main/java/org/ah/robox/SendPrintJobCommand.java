@@ -90,10 +90,11 @@ public class SendPrintJobCommand {
                 int bytes = 0;
 
                 public void transmitted(int sequenceNumber, int totalBytes) throws IOException {
-                    if (initiatePrintFlag) {
+                    if (totalBytes > 10240 && initiatePrintFlag) {
                         @SuppressWarnings("unused")
                         StandardResponse response = printer.startPrint(printJobIdFinal);
                         // TODO do something with response
+                        initiatePrintFlag = false;
                     }
                     if (Main.verboseFlag) {
                         bytes = bytes + 512;

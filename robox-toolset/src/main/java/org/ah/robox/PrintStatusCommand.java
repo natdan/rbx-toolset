@@ -99,16 +99,24 @@ public class PrintStatusCommand {
             File configDir = UploadCommand.ensureConfigDir();
             File linesFile = new File(configDir, printJob + ".lines");
             if (!linesFile.exists()) {
-                throw new IOException("Cannot return total number of lines as there is no .gcode file specified.\n"
-                        + "Please use rbx status -f <robox.gcode file> with this job's file (job name '" + printJob + "')\n"
-                        + "in order for number of lines to be calculated.");
-            }
-            int totalLines = readNumberFromFile(configDir, linesFile);
-
-            if (shortFlag) {
-                System.out.println(Integer.toString(totalLines));
+//                throw new IOException("Cannot return total number of lines as there is no .gcode file specified.\n"
+//                        + "Please use rbx status -f <robox.gcode file> with this job's file (job name '" + printJob + "')\n"
+//                        + "in order for number of lines to be calculated.");
+                if (shortFlag) {
+                    System.out.println("No .gcode file specified");
+                } else {
+                    System.out.println("    Total # line:  " + "Cannot return total number of lines as there is no .gcode file specified.\n"
+                          + "Please use rbx status -f <robox.gcode file> with this job's file (job name '" + printJob + "')\n"
+                          + "in order for number of lines to be calculated.");
+                }
             } else {
-                System.out.println("    Total # line:  " + Integer.toString(totalLines));
+                int totalLines = readNumberFromFile(configDir, linesFile);
+
+                if (shortFlag) {
+                    System.out.println(Integer.toString(totalLines));
+                } else {
+                    System.out.println("    Total # line:  " + Integer.toString(totalLines));
+                }
             }
         }
 
