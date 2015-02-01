@@ -63,8 +63,8 @@
     <repository>
       <id>geotoolkit</id>
       <layout>default</layout>
-      <name>RxTx repo</name>
-      <url>http://maven.geotoolkit.org/org/rxtx/rxtxcomm/2.2pre2/</url>
+      <name>abstracthorizon</name>
+      <url>http://repository.abstracthorizon.org/maven2/abstracthorizon/</url>
     </repository>
   </repositories>
 </project>
