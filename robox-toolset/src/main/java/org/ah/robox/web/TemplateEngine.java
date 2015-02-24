@@ -150,6 +150,12 @@ public class TemplateEngine {
                 ? "<img src=\"/capture.jpg\"/>" : "");
         substitutions.put("commands_css_display", webServer.isAllowCommandsFlag() ? "inline" : "none");
         substitutions.put("automatic-refresh", webServer.getAutomaticRefrehs() >= 0 ? "<meta http-equiv=\"refresh\" content=\"" + webServer.getAutomaticRefrehs() + "\" >" : "");
+        if (status.getPrinter() != null) {
+            substitutions.put("printer_id", status.getPrinter().getPrinterId());
+        } else {
+            // TODO is this OK?
+            substitutions.put("printer_id", "");
+        }
         return template(page, substitutions);
     }
 
@@ -194,6 +200,12 @@ public class TemplateEngine {
                 } else if ("job_id".equals(var)) {
                     if (ps != null) {
                         res.append(ps.getPrintJob());
+                    } else {
+                        res.append("");
+                    }
+                } else if ("printer_id".equals(var)) {
+                    if (status.getPrinter() != null) {
+                        res.append(status.getPrinter().getPrinterId());
                     } else {
                         res.append("");
                     }

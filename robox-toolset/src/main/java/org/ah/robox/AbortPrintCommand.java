@@ -24,6 +24,31 @@ import org.ah.robox.comms.response.StandardResponse;
  */
 public class AbortPrintCommand {
 
+    public static final String[] FINISH_PRINT_GCODE = new String[]{
+        "M103 S0", // Nozzle heater off
+        "M140 S0", // Bed heater off
+
+        "G1 E-3 F400", // Depressurise the head
+
+
+        // Finish/Abort Print
+        "M106", // Fan on full
+        "G0 B0", // Close Nozzle
+        "G91", // Relative positioning
+        "G0 Z5", // Move up 5mm
+        "G90", // Absolute positioning
+        "G0 X15 Y0", // Move to back corner
+
+        // Open Door
+        "G37 S", // Unlock door (S: don't wait for safe temp)
+
+        "M170 S0", // Ambient control off
+        "M107", // Fan off
+        "M128", // Head Light off
+        "M84", // Motors of
+    };
+
+
     public static void execute(Printer printer, List<String> args) throws Exception {
         for (String a : args) {
             if ("-?".equals(a) || "-h".equals(a) || "--help".equals(a)) {
@@ -37,7 +62,10 @@ public class AbortPrintCommand {
         }
 
         StandardResponse response = printer.abortPrint();
-        Main.processStandardResponse(printer, response);
+        if (Main.processStandardResponse(printer, response)) {
+            GCodeCommand.sendGCode(printer, FINISH_PRINT_GCODE);
+        }
+
     }
 
     public static void printHelp() {

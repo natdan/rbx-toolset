@@ -226,53 +226,13 @@ public class Main {
      * @param response
      * @throws IOException
      */
-    public static void processStandardResponse(Printer printer, StandardResponse response) throws IOException {
-        if (response.isBufferOverFlow()) {
-            System.err.println("ERR: Buffer overflow.");
-        } else if (response.isTooLongLine()) {
-            System.err.println("ERR: Line too long.");
-        } else if (response.isUnknownCommand()) {
-            System.err.println("ERR: Unknown command.");
-        } else if (response.isSequenceError()) {
-            System.err.println("ERR: Sequence error.");
-        } else if (response.isFileTooLargeError()) {
-            System.err.println("ERR: File too large error.");
-        } else if (response.isError1()) {
-            System.err.println("ERR: error code 1.");
-        } else if (response.isError5()) {
-            System.err.println("ERR: error code 5.");
-        } else if (response.isError6()) {
-            System.err.println("ERR: error code 6.");
-        } else if (response.isError8()) {
-            System.err.println("ERR: error code 8.");
-        } else if (response.isError9()) {
-            System.err.println("ERR: error code 9.");
-        } else if (response.isError10()) {
-            System.err.println("ERR: error code 10.");
-        } else if (response.isError12()) {
-            System.err.println("ERR: error code 12.");
-        } else if (response.isError13()) {
-            System.err.println("ERR: error code 13.");
-        } else if (response.isError14()) {
-            System.err.println("ERR: error code 14.");
-        } else if (response.isError15()) {
-            System.err.println("ERR: error code 15.");
-        } else if (response.isError16()) {
-            System.err.println("ERR: error code 16.");
-        } else if (response.isError17()) {
-            System.err.println("ERR: error code 17.");
-        } else if (response.isError18()) {
-            System.err.println("ERR: error code 18.");
-        } else if (response.isError19()) {
-            System.err.println("ERR: error code 19.");
-        } else if (response.isError20()) {
-            System.err.println("ERR: error code 20.");
+    public static boolean processStandardResponse(Printer printer, StandardResponse response) throws IOException {
+        String hrs = StandardResponseHelper.processStandardResponse(printer, response);
+        if (hrs != null) {
+            System.err.println(hrs);
         }
-        if (response.isError()) {
-            StandardResponse standardResponse = printer.resetErrors();
-            if (standardResponse.isError()) {
-                System.err.println("*** Cannot clear error!");
-            }
-        }
+        return hrs == null;
     }
+
+
 }

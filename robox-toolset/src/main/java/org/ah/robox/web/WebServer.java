@@ -25,10 +25,14 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
+import org.ah.robox.AbortPrintCommand;
 import org.ah.robox.ExtendedPrinterStatus;
+import org.ah.robox.GCodeCommand;
 import org.ah.robox.Main;
+import org.ah.robox.StandardResponseHelper;
 import org.ah.robox.comms.Printer;
 import org.ah.robox.comms.PrinterDiscovery;
+import org.ah.robox.comms.response.StandardResponse;
 import org.ah.robox.web.UploadFile.Result;
 
 import com.sun.net.httpserver.HttpExchange;
@@ -277,7 +281,7 @@ public class WebServer {
                 int i = path.substring(1).indexOf('/');
                 if (i > 0) {
                     printerId = path.substring(1, i + 1);
-                    path = path.substring(i);
+                    path = path.substring(i + 1);
                     status = statusManager.getPrinterStatus(printerId);
                 } else if (path.length() > 1 && !"/list".equals(path)) {
                     printerId = path.substring(1);
@@ -341,24 +345,44 @@ public class WebServer {
                                 if (allowCommandsFlag) {
                                     Printer printer = status.getPrinter();
                                     if (path.equals("/pause")) {
-                                        printer.pausePrinter();
-                                        // TODO read response
+                                        StandardResponse pausePrinterResponse = printer.pausePrinter();
+                                        String hrs = StandardResponseHelper.processStandardResponse(printer, pausePrinterResponse);
+
                                         errorMsg = "Sent pause command to the printer";
+                                        if (hrs != null) {
+                                            errorMsg = errorMsg + ", but got error:<bt>" + hrs;
+                                        }
                                     } else if (path.equals("/resume")) {
-                                        printer.resumePrinter();
-                                        // TODO read response
+                                        StandardResponse resumePrinterResponse = printer.resumePrinter();
+                                        String hrs = StandardResponseHelper.processStandardResponse(printer, resumePrinterResponse);
+
                                         errorMsg = "Sent resume command to the printer";
+                                        if (hrs != null) {
+                                            errorMsg = errorMsg + ", but got error:<bt>" + hrs;
+                                        }
                                     } else if (path.equals("/abort")) {
-                                        printer.abortPrint();
-                                        // TODO read response
+                                        StandardResponse abortPrintResponse = printer.abortPrint();
+                                        String hrs = StandardResponseHelper.processStandardResponse(printer, abortPrintResponse);
+
                                         errorMsg = "Sent abort print command to the printer";
+                                        if (hrs != null) {
+                                            errorMsg = errorMsg + ", but got error:<bt>" + hrs;
+                                        } else {
+                                            GCodeCommand.sendGCode(printer, AbortPrintCommand.FINISH_PRINT_GCODE);
+                                        }
                                     }
                                 } else {
                                     errorMsg = "Issuing commands to printer not allowed";
                                 }
                                 returnContent = ReturnContent.REDIRECT_TO_MAIN_BODY;
                             } else {
-                                errorMsg = "Printer not available";
+                                if (status == null) {
+                                    errorMsg = "Printer not available";
+                                } else if (status.getOverallPrinterStatus().isError()) {
+                                    errorMsg = "Printer has an error: =" + status.getOverallPrinterStatus().getText() + "=";
+                                } else {
+                                    errorMsg = "Unknown error";
+                                }
                                 returnContent = ReturnContent.REDIRECT_TO_MAIN_BODY;
                             }
                         } else {

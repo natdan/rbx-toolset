@@ -43,8 +43,20 @@ public class ResponseFactory {
     }
 
     public Response readResponse() throws IOException {
-        int r = in.read();
-        if (r < 0) { r = 256 + r; }
+
+        long zeroByteRetry = 2500; // 2.5 seconds
+        long now = System.currentTimeMillis();
+
+        int r = 0;
+        while (r == 0 && (System.currentTimeMillis() - now < zeroByteRetry)) {
+            r = in.read();
+            if (r < 0) { r = 256 + r; }
+            if (r == 0) {
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException ignore) {}
+            }
+        }
 
         if (r == PRINTER_STATUS_RESPONSE) {
             response = new PrinterStatusResponse();

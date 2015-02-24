@@ -84,7 +84,13 @@ public class GCodeCommand {
         }
     }
 
-    private static String sendGCode(Printer printer, String gcode) throws IOException {
+    public static void sendGCode(Printer printer, String[] gcode) throws IOException {
+        for (String line : gcode) {
+            sendGCode(printer, line);
+        }
+    }
+
+    public static String sendGCode(Printer printer, String gcode) throws IOException {
         GCodeResponse response = printer.sendGCode(gcode);
 
         StandardResponse standardResponse = printer.reportErrors();
