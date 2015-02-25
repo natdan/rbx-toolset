@@ -11,14 +11,14 @@ java -jar robox-toolset.jar {<general-options>} <command> {<specific-options>} [
 
 where elements enclosed in '{}' represent none or more occurences and '[]' none or one occurence of an element (EBNF syntax). Syntax is similar to 'git' command.
 
-Until implemented as another command ('install' command) the easiest way of invoking toolset is to create /usr/bin/rbx shellscript like:
+Until implemented as another command ('install' command) the easiest way of invoking toolset is to create /usr/bin/rbx shell script like:
 ```
 #!/bin/bash
 
 java -jar <path-to-jar>/robox-toolset.jar "$@"
 ```
 
-for Unix bases machines or similar for Windows machines where .bat file should be in the PATH. 
+for Unix bases machines or similar for Windows machines where .bat file should be in the PATH. Dont forget to set appropriate permissions (sudo chmod a+x /usr/bin/rbx) to the script.
 
 So, with rbx shell script, invocation of toolset commands should really look like this:
 ```
