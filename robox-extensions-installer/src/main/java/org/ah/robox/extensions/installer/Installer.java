@@ -211,7 +211,7 @@ public class Installer {
             installerWindow.hideInstallButtons();
 
             if (curaEngineOrigFile.exists()) {
-                installerWindow.log("Already has " + curaEngineFile.getAbsolutePath() + " - it will stay.");
+                installerWindow.log("Already has " + curaEngineOrigFile.getAbsolutePath() + " - it will stay.");
                 if (!curaEngineFile.delete()) {
                     installerWindow.log("Failed to delete " + curaEngineFile.getAbsolutePath());
                     return;
@@ -249,6 +249,11 @@ public class Installer {
                     success = success && download(file, f);
                 }
             }
+
+            if ((os == OS.LINUX || os == OS.OSX) && !curaEngineFile.setExecutable(true)) {
+                installerWindow.log("Failed to make CuraEngine executable.");
+                success = false;
+            }
         } finally {
             if (success) {
                 installerWindow.log("Successfully installed Robox Slicer Extension.");
@@ -283,13 +288,6 @@ public class Installer {
         } catch (IOException e) {
             e.printStackTrace();
             installerWindow.log("Could not create file " + f.getAbsolutePath());
-        }
-
-        try {
-            Thread.sleep(10000);
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
         }
         return true;
     }
