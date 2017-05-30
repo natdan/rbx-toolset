@@ -107,10 +107,11 @@ public class InstallerWindow extends JFrame {
         informationPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
         JLabel icon = new JLabel(UIManager.getIcon("OptionPane.warningIcon"));
-        JLabel label = new JLabel("This installer is going to install Robox Slicer Extension "
-                + "from https://github.com/nebbian/RoboxSlicerExtension/\n"
-                + "Slic3r configuration file needed for Slicer Extension will be "
-                + "stored in <AM install dir>/Slic3r/Config.");
+        JLabel label = new JLabel("<html>This installer is going to install<br>"
+                + "Robox Slicer Extension from <a href=\"https://github.com/nebbian/RoboxSlicerExtension/\">https://github.com/nebbian/RoboxSlicerExtension/</a><br>"
+                + "Slic3r configuration file needed for Slicer Extension<br>"
+                + "will be stored in &lt;AM install dir&gt;/Slic3r/Config.</html>"
+                );
         informationPanel.add(icon);
         informationPanel.add(label);
 
