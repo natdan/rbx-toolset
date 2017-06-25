@@ -23,24 +23,26 @@ package org.ah.robox.extensions.installer;
 */
 public enum InstallationFile {
 
-    CuraEngine("Common/Cura/CuraEngine", "shell%20scripts/CuraEngine", false, false),
-    Slic3rPostprocessPl("Common/Cura/slic3r_postprocess.pl", "shell%20scripts/slic3r_postprocess.pl", false, true),
-    Slic3rDir("Common/Slic3r", null, true, true),
-    Slic3rConfigDir("Common/Slic3r/Config", null, true, true),
-    Slic3rConfigFile("Common/Slic3r/Config/Robox_slic3r_config_bundle.ini", "slic3r/config/Robox_slic3r_config_bundle.ini", false, true),
-    FlowJarFile("Common/robox-slicer-flow-1.0-SNAPSHOT.jar", "robox-slicer-flow-1.0-SNAPSHOT.jar", false, true);
+    CuraEngine("Common/Cura/CuraEngine", "shell%20scripts/CuraEngine", false, false, true),
+    Slic3rPostprocessPl("Common/Cura/slic3r_postprocess.pl", "shell%20scripts/slic3r_postprocess.pl", false, true, false),
+    Slic3rDir("Common/Slic3r", null, true, true, false),
+    Slic3rConfigDir("Common/Slic3r/Config", null, true, true, false),
+    Slic3rConfigFile("Common/Slic3r/Config/Robox_slic3r_config_bundle.ini", "slic3r/config/Robox_slic3r_config_bundle.ini", false, true, false),
+    FlowJarFile("Common/robox-slicer-flow-1.0-SNAPSHOT.jar", "robox-slicer-flow-1.0-SNAPSHOT.jar", false, true, true);
 
 
     private String localPath;
     private String repoPath;
     private boolean isDir;
     private boolean delete;
+    private boolean executable;
 
-    InstallationFile(String localPath, String repoPath, boolean isDir, boolean delete) {
+    InstallationFile(String localPath, String repoPath, boolean isDir, boolean delete, boolean executable) {
         this.localPath = localPath;
         this.repoPath = repoPath;
         this.isDir = isDir;
         this.delete = delete;
+        this.executable = executable;
     }
 
     public String getLocalPath() { return localPath; }
@@ -50,4 +52,6 @@ public enum InstallationFile {
     public boolean isDir() { return isDir; }
 
     public boolean isDelete() { return delete; }
+
+    public boolean isExecutable() { return executable; }
 }

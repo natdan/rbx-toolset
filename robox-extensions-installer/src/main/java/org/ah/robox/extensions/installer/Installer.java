@@ -248,12 +248,11 @@ public class Installer {
                 } else {
                     installerWindow.log("Dowloading file " + file.getLocalPath());
                     success = success && download(file, f);
+                    if (file.isExecutable() && (os == OS.LINUX || os == OS.OSX) && !curaEngineFile.setExecutable(true)) {
+                        installerWindow.log("Failed to make " + file.getLocalPath() + " executable.");
+                        success = false;
+                    }
                 }
-            }
-
-            if ((os == OS.LINUX || os == OS.OSX) && !curaEngineFile.setExecutable(true)) {
-                installerWindow.log("Failed to make CuraEngine executable.");
-                success = false;
             }
         } finally {
             if (success) {
