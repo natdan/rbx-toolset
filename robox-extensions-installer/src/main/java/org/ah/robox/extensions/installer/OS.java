@@ -24,8 +24,8 @@ package org.ah.robox.extensions.installer;
 public enum OS {
 
     WINDOWS("Windows", "C:\\Program Files\\CEL", "CuraEngine.exe", "CuraEngine_orig.exe"),
-    LINUX("Linux", "~", "CuraEngine", "CuraEngine_exe"),
-    OSX("OSX", "/Applications/CEL", "CuraEngine", "CuraEngine_exe"),
+    LINUX("Linux", "~", "CuraEngine", "CuraEngine_orig"),
+    OSX("OSX", "/Applications/CEL", "CuraEngine", "CuraEngine_orig"),
     UNKNOWN("Unknown", "", "", "");
 
     private String label;

@@ -27,7 +27,9 @@ public enum InstallationFile {
     Slic3rPostprocessPl("Common/Cura/slic3r_postprocess.pl", "shell%20scripts/slic3r_postprocess.pl", false, true),
     Slic3rDir("Common/Slic3r", null, true, true),
     Slic3rConfigDir("Common/Slic3r/Config", null, true, true),
-    Slic3rConfigFile("Common/Slic3r/Config/Robox_slic3r_config_bundle.ini", "slic3r/config/Robox_slic3r_config_bundle.ini", false, true);
+    Slic3rConfigFile("Common/Slic3r/Config/Robox_slic3r_config_bundle.ini", "slic3r/config/Robox_slic3r_config_bundle.ini", false, true),
+    FlowJarFile("Common/robox-slicer-flow-1.0-SNAPSHOT.jar", "robox-slicer-flow-1.0-SNAPSHOT.jar", false, true);
+
 
     private String localPath;
     private String repoPath;

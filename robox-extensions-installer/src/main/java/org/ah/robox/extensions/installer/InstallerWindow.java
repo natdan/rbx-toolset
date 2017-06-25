@@ -23,6 +23,7 @@ import static javax.swing.SpringLayout.SOUTH;
 import static javax.swing.SpringLayout.WEST;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Toolkit;
@@ -139,6 +140,7 @@ public class InstallerWindow extends JFrame {
         JLabel amPathLabel = new JLabel("AutoMaker Path:");
         amPath = new JTextField("");
         amPathError = new JLabel("");
+        amPathError.setForeground(Color.RED);
         browseButton = new JButton("Browse...");
         logArea = new JTextArea("");
 
@@ -154,11 +156,13 @@ public class InstallerWindow extends JFrame {
 
         layout.putConstraint(NORTH, amPathLabel, 5, NORTH, mainPanel);
         layout.putConstraint(WEST, amPathLabel, 5, WEST, mainPanel);
+
         layout.putConstraint(NORTH, amPath, 5, SOUTH, amPathLabel);
         layout.putConstraint(WEST, amPath, 5, WEST, mainPanel);
         layout.putConstraint(NORTH, browseButton, 5, SOUTH, amPathLabel);
         layout.putConstraint(EAST, browseButton, -5, EAST, mainPanel);
         layout.putConstraint(EAST, amPath, 5, WEST, browseButton);
+
         layout.putConstraint(NORTH, amPathError, 5, SOUTH, amPath);
         layout.putConstraint(WEST, amPathError, 5, WEST, mainPanel);
         layout.putConstraint(NORTH, logAreaScroller, 15, SOUTH, amPathError);

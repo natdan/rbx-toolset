@@ -38,6 +38,7 @@ public class Installer {
 
     private InstallerWindow installerWindow;
     private OS os;
+    private boolean exterimental = true;
     private boolean permanentError = false;
     private File amDir;
     private File commonDir;
@@ -269,7 +270,7 @@ public class Installer {
             f.createNewFile();
 
             byte[] buf = new byte[10240];
-            URL url = new URL("https://raw.githubusercontent.com/nebbian/RoboxSlicerExtension/master/" + file.getRepoPath());
+            URL url = getURL(file.getRepoPath());
             try (InputStream in = url.openStream()) {
                 try (FileOutputStream out = new FileOutputStream(f)) {
                     int r = in.read(buf);
@@ -290,5 +291,13 @@ public class Installer {
             installerWindow.log("Could not create file " + f.getAbsolutePath());
         }
         return true;
+    }
+
+    private URL getURL(String repoPath) throws MalformedURLException {
+        if (exterimental) {
+            return new URL("https://raw.githubusercontent.com/nebbian/RoboxSlicerExtension/Initial-Flow-Code/" + repoPath);
+        } else {
+            return new URL("https://raw.githubusercontent.com/nebbian/RoboxSlicerExtension/master/" + repoPath);
+        }
     }
 }
