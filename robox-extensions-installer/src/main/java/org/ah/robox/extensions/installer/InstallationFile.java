@@ -24,7 +24,6 @@ package org.ah.robox.extensions.installer;
 public enum InstallationFile {
 
     CuraEngine("Common/Cura/CuraEngine", "shell%20scripts/CuraEngine", false, false, true),
-    Slic3rPostprocessPl("Common/Cura/slic3r_postprocess.pl", "shell%20scripts/slic3r_postprocess.pl", false, true, false),
     Slic3rDir("Common/Slic3r", null, true, true, false),
     Slic3rConfigDir("Common/Slic3r/Config", null, true, true, false),
     Slic3rConfigFile("Common/Slic3r/Config/Robox_slic3r_config_bundle.ini", "slic3r/config/Robox_slic3r_config_bundle.ini", false, true, false),
