@@ -38,7 +38,7 @@ public class Installer {
 
     private InstallerWindow installerWindow;
     private OS os;
-    private boolean exterimental = true;
+    private boolean exterimental = false;
     private boolean permanentError = false;
     private File amDir;
     private File commonDir;
@@ -173,7 +173,7 @@ public class Installer {
 
             Stack<InstallationFile> dirDelStack = new Stack<>();
 
-            for (InstallationFile file : InstallationFile.values()) {
+            for (InstallationFile file : os.getInstallationFiles()) {
                 if (file.isDelete()) {
                     if (file.isDir()) {
                         dirDelStack.push(file);
@@ -224,9 +224,8 @@ public class Installer {
                 }
             }
 
-
             success = true;
-            for (InstallationFile file : InstallationFile.values()) {
+            for (InstallationFile file : os.getInstallationFiles()) {
                 File f = new File(amDir, file.getLocalPath());
                 if (file.isDir()) {
                     if (f.exists()) {
@@ -296,7 +295,7 @@ public class Installer {
         if (exterimental) {
             return new URL("https://raw.githubusercontent.com/nebbian/RoboxSlicerExtension/Initial-Flow-Code/" + repoPath);
         } else {
-            return new URL("https://raw.githubusercontent.com/nebbian/RoboxSlicerExtension/master/" + repoPath);
+            return new URL("https://github.com/nebbian/RoboxSlicerExtension/blob/master/" + repoPath + "?raw=true");
         }
     }
 }

@@ -23,21 +23,23 @@ package org.ah.robox.extensions.installer;
 */
 public enum OS {
 
-    WINDOWS("Windows", "C:\\Program Files\\CEL", "CuraEngine.exe", "CuraEngine_orig.exe"),
-    LINUX("Linux", "~", "CuraEngine", "CuraEngine_orig"),
-    OSX("OSX", "/Applications/CEL", "CuraEngine", "CuraEngine_orig"),
-    UNKNOWN("Unknown", "", "", "");
+    WINDOWS("Windows", "C:\\Program Files\\CEL", "CuraEngine.exe", "CuraEngine_orig.exe", InstallationFilesWindows.values()),
+    LINUX("Linux", "~", "CuraEngine", "CuraEngine_orig", InstallationFilesLinux.values()),
+    OSX("OSX", "/Applications/CEL", "CuraEngine", "CuraEngine_orig", InstallationFilesOSX.values()),
+    UNKNOWN("Unknown", "", "", "", new InstallationFile[0]);
 
     private String label;
     private String defaultInstallationPath;
     private String curaEnginePath;
     private String curaEngineOrigPath;
+    private InstallationFile[] installationFiles;
 
-    OS(String label, String defaultInstallationPath, String curaEnginePath, String curaEngineOrigPath) {
+    OS(String label, String defaultInstallationPath, String curaEnginePath, String curaEngineOrigPath, InstallationFile[] installationFiles) {
         this.label = label;
         this.defaultInstallationPath = defaultInstallationPath;
         this.curaEnginePath = curaEnginePath;
         this.curaEngineOrigPath = curaEngineOrigPath;
+        this.installationFiles = installationFiles;
     }
 
     public String getLabel() { return label; }
@@ -47,6 +49,10 @@ public enum OS {
     public String getCuraEnginePath() { return curaEnginePath; }
 
     public String getCuraEngineOrigPath() { return curaEngineOrigPath; }
+
+    public InstallationFile[] getInstallationFiles() {
+        return installationFiles;
+    }
 
     public static OS detect() {
         String os = System.getProperty("os.name").toLowerCase();
