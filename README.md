@@ -106,7 +106,7 @@ Upload
 This command is to send xxxx_robox.gcode file to allow estimate to work. Also, same file is needed for estimate and work of 'web' command. Usage:
 
 ```
-Usage: rbx [<general-options>] update [<specific-options>]
+Usage: rbx [<general-options>] upload [<specific-options>]
 
   General options are one of these:
   -v | --verbose   - increases voutput erbosity level
