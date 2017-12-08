@@ -34,7 +34,7 @@ public class DummyTestPrinterTestDiscovery implements PrinterDiscovery {
         return testPrinterChannels;
     }
 
-    public List<Printer> findAllPrinters() throws IOException {
+    public List<Printer> findAllPrinters(boolean remote) throws IOException {
        List<Printer> resultPrinters = new ArrayList<Printer>();
         List<PrinterChannel> channels = findAllPrinterChannels();
         for (PrinterChannel channel : channels) {

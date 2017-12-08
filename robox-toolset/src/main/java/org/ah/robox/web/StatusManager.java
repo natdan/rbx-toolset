@@ -205,7 +205,7 @@ public class StatusManager implements Runnable {
     }
 
     private void updatePrinters() throws IOException {
-        List<Printer> allPrinters = printerDiscovery.findAllPrinters();
+        List<Printer> allPrinters = printerDiscovery.findAllPrinters(false);
         for (Printer printer : allPrinters) {
             String printerId = printer.getPrinterId();
             Printer existingPrinter = printers.get(printerId);

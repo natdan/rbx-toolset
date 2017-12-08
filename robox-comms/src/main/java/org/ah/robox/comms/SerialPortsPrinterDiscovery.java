@@ -12,17 +12,15 @@
  *******************************************************************************/
 package org.ah.robox.comms;
 
-import gnu.io.CommPort;
-import gnu.io.CommPortIdentifier;
-import gnu.io.NoSuchPortException;
-import gnu.io.PortInUseException;
-import gnu.io.SerialPort;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.Socket;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,11 +29,23 @@ import java.util.Map;
 
 import org.ah.robox.comms.utils.SharedLibraries;
 
+import gnu.io.CommPort;
+import gnu.io.CommPortIdentifier;
+import gnu.io.NoSuchPortException;
+import gnu.io.PortInUseException;
+import gnu.io.SerialPort;
+import jssc.ISerialPort;
+import jssc.LocalSerialPort;
+import jssc.SerialPortException;
+
 /**
  *
  * @author Daniel Sendula
  */
 public class SerialPortsPrinterDiscovery implements PrinterDiscovery {
+
+    public static final int SOCKET_TIMEOUT = 250; // 1/4 sec
+    public static final int TOTAL_TIMEOUT = 2000; // 2 sec
 
     {
         SharedLibraries.load("rxtxSerial");
@@ -43,10 +53,10 @@ public class SerialPortsPrinterDiscovery implements PrinterDiscovery {
 
     private boolean verbose = false;
     private boolean debug = false;
-    private Map<String, SerialPortPrinterChannel> channels = new HashMap<String, SerialPortPrinterChannel>();
+    private Map<String, PrinterChannel> channels = new HashMap<String, PrinterChannel>();
     private Map<PrinterChannel, Printer> printers = new HashMap<PrinterChannel, Printer>();
 
-    protected void closed(SerialPortPrinterChannel channel) {
+    protected void closed(PrinterChannel channel) {
         channels.remove(channel);
     }
 
@@ -150,33 +160,44 @@ public class SerialPortsPrinterDiscovery implements PrinterDiscovery {
             if (verbose) {
                 System.out.println("Trying to open device " + devName);
             }
-            SerialPortPrinterChannel channel = channels.get(devName);
+            PrinterChannel channel = channels.get(devName);
             if (channel != null) {
                 printerChannels.add(channel);
             } else {
+                openPort(printerChannels, devName);
+            }
+        } catch (IOException e) {
+            if (debug) {
+                e.printStackTrace();
+            } else if (verbose) {
+                System.err.println(e.getMessage());
+            }
+            throw e;
+        }
+    }
 
-                CommPortIdentifier portIdentifier = CommPortIdentifier.getPortIdentifier(devName);
+    private void openPort(List<PrinterChannel> printerChannels, String devName) throws IOException {
+        try {
+            CommPortIdentifier portIdentifier = CommPortIdentifier.getPortIdentifier(devName);
+            if (portIdentifier.isCurrentlyOwned()) {
+                System.err.println("Error: Port is currently in use");
+                System.exit(1);
+            } else {
+                int timeout = 2000;
 
-                if (portIdentifier.isCurrentlyOwned()) {
-                    System.err.println("Error: Port is currently in use");
-                    System.exit(1);
+                CommPort commPort = portIdentifier.open(devName, timeout);
+
+                if (commPort instanceof SerialPort) {
+                    SerialPort serialPort = (SerialPort)commPort;
+
+
+                    SerialPortPrinterChannel printerChannel = new SerialPortPrinterChannel(this, devName, serialPort);
+
+                    channels.put(devName, printerChannel);
+                    printerChannels.add(printerChannel);
                 } else {
-                    int timeout = 2000;
-
-                    CommPort commPort = portIdentifier.open(devName, timeout);
-
-                    if (commPort instanceof SerialPort) {
-                        SerialPort serialPort = (SerialPort)commPort;
-
-
-                        SerialPortPrinterChannel printerChannel = new SerialPortPrinterChannel(this, devName, serialPort);
-
-                        channels.put(devName, printerChannel);
-                        printerChannels.add(printerChannel);
-                    } else {
-                        if (verbose) {
-                            System.err.println("Device " + devName + " is not serial port");
-                        }
+                    if (verbose) {
+                        System.err.println("Device " + devName + " is not serial port");
                     }
                 }
             }
@@ -192,17 +213,30 @@ public class SerialPortsPrinterDiscovery implements PrinterDiscovery {
             } else if (verbose) {
                 System.err.println(e.getMessage());
             }
-        } catch (IOException e) {
+        }
+    }
+
+    private void jsscAnotherOpenPort(List<PrinterChannel> printerChannels, String devName) throws IOException {
+        try {
+            ISerialPort serialPort = new LocalSerialPort(devName);
+            serialPort.openPort();
+            serialPort.setParams(115200, 8, 1, 0);
+
+            PrinterChannel printerChannel = new JSSCSerialPortPrinterChannel(this, devName, serialPort);
+
+            channels.put(devName, printerChannel);
+            printerChannels.add(printerChannel);
+
+        } catch (SerialPortException e) {
             if (debug) {
                 e.printStackTrace();
             } else if (verbose) {
                 System.err.println(e.getMessage());
             }
-            throw e;
         }
     }
 
-    public List<Printer> findAllPrinters() throws IOException {
+    public List<Printer> findAllPrinters(boolean includeRemote) throws IOException {
         List<Printer> resultPrinters = new ArrayList<Printer>();
         List<PrinterChannel> channels = findAllPrinterChannels();
         for (PrinterChannel channel : channels) {
@@ -210,7 +244,64 @@ public class SerialPortsPrinterDiscovery implements PrinterDiscovery {
             printers.put(channel, printer);
             resultPrinters.add(printer);
         }
+
+        if (includeRemote) {
+            final DatagramSocket datagramSocket = new DatagramSocket();
+            try {
+                datagramSocket.setBroadcast(true);
+
+                byte[] data = new byte[2048];
+                DatagramPacket packet = new DatagramPacket(data, data.length);
+
+                int port = datagramSocket.getLocalPort();
+                // System.out.println("Local port: " + port + " is bound: " + datagramSocket.isBound());
+
+                byte[] buf = ("DISCOVER_ROVER#255.255.255.255:" + port).getBytes();
+                DatagramPacket response = new DatagramPacket(buf, buf.length,
+                        InetAddress.getByName("255.255.255.255"), 4080);
+                datagramSocket.send(response);
+
+                datagramSocket.setSoTimeout((SOCKET_TIMEOUT));
+
+                long currentTimeout = TOTAL_TIMEOUT;
+                long started = System.currentTimeMillis();
+                while (System.currentTimeMillis() - started < currentTimeout) {
+                    try {
+                        datagramSocket.receive(packet);
+                        String s = new String(data, 0, packet.getLength());
+                        if (s.startsWith("serialproxy://")) {
+                            PrinterChannel remotePrinterChannel = getRemotePrinterChannel(s.substring(14));
+                            if (remotePrinterChannel != null) {
+                                Printer remotePrinter = getPrinterForChannel(remotePrinterChannel);
+                                printers.put(remotePrinterChannel, remotePrinter);
+                                resultPrinters.add(remotePrinter);
+                            }
+                        }
+                        // After first printer discovered drop down to only 250ms after for each new...
+                        started = System.currentTimeMillis();
+                        currentTimeout = SOCKET_TIMEOUT;
+                    } catch (IOException ignore) {
+                    }
+                }
+            } finally {
+                datagramSocket.close();
+            }
+
+        }
+
         return resultPrinters;
+    }
+
+    private PrinterChannel getRemotePrinterChannel(String path) {
+        try {
+            String[] split = path.split(":");
+            String address = split[0];
+            int port = Integer.parseInt(split[1]);
+            Socket socket = new Socket(address, port);
+            return new RemotelPortPrinterChannel(this, path, socket);
+        } catch (Exception ignore) {
+        }
+        return null;
     }
 
     public Printer getPrinterForChannel(PrinterChannel printerChannel) {

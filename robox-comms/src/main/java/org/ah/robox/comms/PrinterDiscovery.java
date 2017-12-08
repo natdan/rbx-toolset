@@ -23,7 +23,7 @@ public interface PrinterDiscovery {
 
     List<PrinterChannel> findAllPrinterChannels() throws IOException;
 
-    List<Printer> findAllPrinters() throws IOException;
+    List<Printer> findAllPrinters(boolean includeRemote) throws IOException;
 
     Printer getPrinterForChannel(PrinterChannel printerChannel);
 }

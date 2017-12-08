@@ -30,6 +30,7 @@ public class Main {
 
     public static boolean verboseFlag = false;
     public static boolean debugFlag = false;
+    public static boolean remoteFlag = false;
 
     public static void main(String[] args) throws Exception {
         String command = null;
@@ -51,10 +52,15 @@ public class Main {
                 verboseFlag = true;
             } else if ("-d".equals(arg) || "--debug".equals(arg)) {
                 debugFlag = true;
+            } else if ("-r".equals(arg) || "--remote".equals(arg)) {
+                remoteFlag = true;
             } else if ("-?".equals(arg) || "-h".equals(arg) || "--help".equals(arg)) {
                 command = "help";
             } else if ("list".equals(arg)) {
                 command = "list";
+                furtherArgsFlag = true;
+            } else if ("install".equals(arg)) {
+                command = "install";
                 furtherArgsFlag = true;
             } else if ("status".equals(arg)) {
                 command = "status";
@@ -105,11 +111,13 @@ public class Main {
 
             List<Printer> printers = null;
             if (!"upload".equals(command) && !"web".equals(command)) {
-                printers = discovery.findAllPrinters();
+                printers = discovery.findAllPrinters(remoteFlag);
             }
 
             if ("list".equals(command)) {
                 ListCommand.execute(printers);
+            } else if ("install".equals(command)) {
+                InstallCommand.execute(furtherArgs);
             } else if ("upload".equals(command)) {
                 UploadCommand.execute(furtherArgs);
             } else if ("web".equals(command)) {
@@ -123,7 +131,7 @@ public class Main {
                     if (printers.size() == 1) {
                         selectedPrinter = printers.get(0);
                     } else if (printers.size() == 0 && !helpInvocation) {
-                        System.err.println("There are not detected printers.");
+                        System.err.println("There are no detected printers.");
                         System.exit(1);
                     } else if (!helpInvocation) {
                         System.err.println("There are more detected printers:");
@@ -183,6 +191,7 @@ public class Main {
         System.out.println("  General options are one of these:");
         System.out.println("  -v | --verbose   - increases voutput erbosity level");
         System.out.println("  -d | --debug     - increases debug level");
+        System.out.println("  -r | --remote    - include remote printers in discovery");
         System.out.println("  -p | --printer   - if more than one printer is connected to your");
         System.out.println("                     computer you must select which one command is");
         System.out.println("                     going to be applied on. You can get list of");
@@ -204,6 +213,7 @@ public class Main {
         System.out.println("");
         System.out.println("  Supported commands are:");
         System.out.println("");
+        System.out.println("  install  - installs in local (linux) system");
         System.out.println("  list     - lists attached printers");
         System.out.println("  status   - displays printer's status");
         System.out.println("  pause    - pauses current print if there's one");
