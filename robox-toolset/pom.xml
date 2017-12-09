@@ -12,6 +12,8 @@
   <url>http://maven.apache.org</url>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.build.timestamp>${maven.build.timestamp}</maven.build.timestamp>
+    <maven.build.timestamp.format>yyyyMMdd.HHmmss</maven.build.timestamp.format>
   </properties>
   <dependencies>
     <dependency>
@@ -25,6 +27,16 @@
     </dependency>
   </dependencies>
   <build>
+    <resources>
+      <resource>
+        <!-- <targetPath>../packaging</targetPath> -->
+        <directory>src/packaging/script</directory>
+        <filtering>true</filtering>
+        <includes>
+          <include>**/rbx.script</include>
+        </includes>
+      </resource>
+    </resources>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -81,7 +93,7 @@
           <!-- `#!/bin/sh -->
           <!--            -->
           <!-- exec java " + flags + " -jar "$0" "$@" -->
-          <!-- <scriptFile>src/packaging/someScript.extension</scriptFile> -->
+          <scriptFile>rbx.script</scriptFile>
         </configuration>
         <executions>
           <execution>
