@@ -24,11 +24,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import java.util.logging.Logger;
 
 import org.ah.robox.AbortPrintCommand;
 import org.ah.robox.ExtendedPrinterStatus;
 import org.ah.robox.GCodeCommand;
-import org.ah.robox.Main;
 import org.ah.robox.StandardResponseHelper;
 import org.ah.robox.comms.Printer;
 import org.ah.robox.comms.PrinterDiscovery;
@@ -46,6 +46,8 @@ import com.sun.net.httpserver.HttpServer;
  */
 @SuppressWarnings("restriction")
 public class WebServer {
+
+    private static final Logger logger = Logger.getLogger(WebServer.class.getName());
 
     private int refreshInterval = 15; // 15 seconds
     private String postRefreshCommand = null;
@@ -86,9 +88,7 @@ public class WebServer {
 
         address = new InetSocketAddress(port);
 
-        if (Main.verboseFlag) {
-            System.out.println("Starting web server at " + address);
-        }
+        logger.fine("Starting web server at " + address);
         server = HttpServer.create(address, 0);
 
         File staticFiles = null;
@@ -100,6 +100,7 @@ public class WebServer {
         WebServer.MainHandler mainHandler = new WebServer.MainHandler(statusManager, templateFile, null, null, null, imageCache, staticFiles);
         server.createContext("/", mainHandler);
         server.setExecutor(Executors.newCachedThreadPool(new ThreadFactory() {
+            @Override
             public Thread newThread(Runnable runnable) {
                 Thread thread = new Thread(runnable);
                 thread.setDaemon(true);
@@ -259,6 +260,7 @@ public class WebServer {
             this.staticFiles = staticFiles;
         }
 
+        @Override
         public void handle(HttpExchange exchange) throws IOException {
             try {
                 String method = exchange.getRequestMethod();

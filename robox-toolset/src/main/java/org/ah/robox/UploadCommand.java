@@ -18,6 +18,7 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  *
@@ -25,6 +26,7 @@ import java.util.List;
  * @author Daniel Sendula
  */
 public class UploadCommand {
+    private static final Logger logger = Logger.getLogger(UploadCommand.class.getName());
 
     public static void execute(List<String> args) throws Exception {
 
@@ -48,24 +50,24 @@ public class UploadCommand {
                 printHelp();
                 System.exit(0);
             } else {
-                System.err.println("Unknown option: '" + a + "'");
+                logger.severe("Unknown option: '" + a + "'");
                 printHelp();
                 System.exit(1);
             }
         }
         if (fileFlag) {
-            System.err.println("File name is missing.");
+            logger.severe("File name is missing.");
             System.exit(1);
         }
         if (jobIdFlag) {
-            System.err.println("Job id is missing.");
+            logger.severe("Job id is missing.");
             System.exit(1);
         }
 
         if (fileName != null) {
             File f = new File(fileName);
             if (!f.exists()) {
-                System.err.println("File '" + fileName + "' does not exist");
+                logger.severe("File '" + fileName + "' does not exist");
                 System.exit(1);
             }
 
@@ -76,13 +78,13 @@ public class UploadCommand {
                 } else if (fn.endsWith(".gcode")) {
                     jobId = fn.substring(0, fn.length() - 6);
                 } else {
-                    System.err.println("Cannot deduct print job from file name '" + jobId + "'");
+                    logger.severe("Cannot deduct print job from file name '" + jobId + "'");
                     System.exit(1);
                 }
             }
             String warnings = copyJobFile(jobId, fileName);
             if (warnings != null) {
-                System.err.println(warnings);
+                logger.warning(warnings);
             }
         }
 
@@ -90,43 +92,43 @@ public class UploadCommand {
     }
 
     public static void printHelp() {
-        System.out.println("Usage: rbx [<general-options>] update [<specific-options>]");
-        System.out.println("");
-        System.out.println("  General options are one of these:");
-        System.out.println("  -v | --verbose   - increases voutput erbosity level");
-        System.out.println("  -d | --debug     - increases debug level");
-        System.out.println("");
+        logger.info("Usage: rbx [<general-options>] update [<specific-options>]");
+        logger.info("");
+        logger.info("  General options are one of these:");
+        logger.info("  -v | --verbose   - increases voutput erbosity level");
+        logger.info("  -d | --debug     - increases debug level");
+        logger.info("");
         Main.printSpecificOptions();
-        System.out.println("");
-        System.out.println("  -f | --file          - gcode file needed for estimate");
-        System.out.println("  -i | --job-id        - job id");
-        System.out.println("");
-        System.out.println("Note: if -f/--file option is not set, this command will try to");
-        System.out.println("read job file from the stdin. But for it to work you must specify");
-        System.out.println("-i/--job-id option with job-id. In case of -f/--file option you");
-        System.out.println("may omit -i/--job-id option if file name comes form AutoMaker and");
-        System.out.println("is in form xxxxxxxx_robox.gcode or xxxxxxxx.gcode where xxxxxxxx");
-        System.out.println("is job id.");
-        System.out.println("");
-        System.out.println("For estimate to work, this utility needs original xxx_robox.gcode file.");
-        System.out.println("It will store file in ~/.robox/ dir, along with two more files:");
-        System.out.println("  <jobid>.lines    - file that contains number of non-empty .gcode lines");
-        System.out.println("  <jobid>.estimate - file with line number from job file that is higher");
-        System.out.println("                     that 100 (warming bed and head). Also, that' file's");
-        System.out.println("                     last modified date is going to serve for estimate");
-        System.out.println("                     calculation.");
-        System.out.println("You don't need to specify -f each time to obtain status - only once");
-        System.out.println("at the beginning. <jobid>.estimate file is going to be create no matter");
-        System.out.println("if estimate is going to succeed or fail (due to lack of <jobid> file");
-        System.out.println("previously specified). It is going to be written only once per detected");
-        System.out.println("job.");
-        System.out.println("");
-        System.out.println("Also, the moment new job is detected, all other files from previous jobs");
-        System.out.println("are going to be removed.");
-        System.out.println("");
-        System.out.println("More time passed, estimate might be more correct. Estimate is calculated");
-        System.out.println("by amount of lines processed per amount of time starting from when");
-        System.out.println("<jobid>.estimate file is created.");
+        logger.info("");
+        logger.info("  -f | --file          - gcode file needed for estimate");
+        logger.info("  -i | --job-id        - job id");
+        logger.info("");
+        logger.info("Note: if -f/--file option is not set, this command will try to");
+        logger.info("read job file from the stdin. But for it to work you must specify");
+        logger.info("-i/--job-id option with job-id. In case of -f/--file option you");
+        logger.info("may omit -i/--job-id option if file name comes form AutoMaker and");
+        logger.info("is in form xxxxxxxx_robox.gcode or xxxxxxxx.gcode where xxxxxxxx");
+        logger.info("is job id.");
+        logger.info("");
+        logger.info("For estimate to work, this utility needs original xxx_robox.gcode file.");
+        logger.info("It will store file in ~/.robox/ dir, along with two more files:");
+        logger.info("  <jobid>.lines    - file that contains number of non-empty .gcode lines");
+        logger.info("  <jobid>.estimate - file with line number from job file that is higher");
+        logger.info("                     that 100 (warming bed and head). Also, that' file's");
+        logger.info("                     last modified date is going to serve for estimate");
+        logger.info("                     calculation.");
+        logger.info("You don't need to specify -f each time to obtain status - only once");
+        logger.info("at the beginning. <jobid>.estimate file is going to be create no matter");
+        logger.info("if estimate is going to succeed or fail (due to lack of <jobid> file");
+        logger.info("previously specified). It is going to be written only once per detected");
+        logger.info("job.");
+        logger.info("");
+        logger.info("Also, the moment new job is detected, all other files from previous jobs");
+        logger.info("are going to be removed.");
+        logger.info("");
+        logger.info("More time passed, estimate might be more correct. Estimate is calculated");
+        logger.info("by amount of lines processed per amount of time starting from when");
+        logger.info("<jobid>.estimate file is created.");
     }
 
     public static void createLinesFile(String printJob, int numberOfLines) throws IOException {

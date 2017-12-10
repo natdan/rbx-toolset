@@ -30,11 +30,13 @@ public class DummyTestPrinterTestDiscovery implements PrinterDiscovery {
     private List<PrinterChannel> testPrinterChannels = new ArrayList<PrinterChannel>();
     private List<Printer> testPrinters = new ArrayList<Printer>();
 
+    @Override
     public List<PrinterChannel> findAllPrinterChannels() throws IOException {
         return testPrinterChannels;
     }
 
-    public List<Printer> findAllPrinters(boolean remote) throws IOException {
+    @Override
+    public List<Printer> findAllPrinters() throws IOException {
        List<Printer> resultPrinters = new ArrayList<Printer>();
         List<PrinterChannel> channels = findAllPrinterChannels();
         for (PrinterChannel channel : channels) {
@@ -44,6 +46,7 @@ public class DummyTestPrinterTestDiscovery implements PrinterDiscovery {
        return resultPrinters;
     }
 
+    @Override
     public Printer getPrinterForChannel(PrinterChannel printerChannel) {
         for (Printer printer : testPrinters) {
             if (printerChannel == printer.getPrinterChannel()) {
@@ -59,5 +62,10 @@ public class DummyTestPrinterTestDiscovery implements PrinterDiscovery {
 
     public List<Printer> getPrinters() {
         return testPrinters;
+    }
+
+    @Override
+    public boolean hasChannel(PrinterChannel printerChannel) {
+        return testPrinterChannels.contains(printerChannel);
     }
 }

@@ -14,8 +14,9 @@ package org.ah.robox.comms.request;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import org.ah.robox.comms.response.ResponseFactory;
 import org.ah.robox.comms.utils.PrintHex;
 
 /**
@@ -23,6 +24,8 @@ import org.ah.robox.comms.utils.PrintHex;
  * @author Daniel Sendula
  */
 public class RequestFactory {
+
+    private static final Logger logger = Logger.getLogger(RequestFactory.class.getName());
 
     public static int START_PRINT_JOB_TRANSFER = 0x90;
     public static int PRINT_JOB_DATA = 0x91;
@@ -155,9 +158,7 @@ public class RequestFactory {
     private void sendBuffer(byte[] buffer) throws IOException {
         out.write(buffer);
         out.flush();
-        if (ResponseFactory.DEBUG) {
-            System.out.println("Transmitted packet:");
-            PrintHex.printHex(buffer);
-        }
+        logger.finer("Transmitted packet:");
+        PrintHex.printHex(logger, Level.FINER, buffer);
     }
 }

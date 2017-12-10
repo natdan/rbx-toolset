@@ -17,6 +17,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
+import java.util.logging.Logger;
 
 import org.ah.robox.comms.Printer;
 import org.ah.robox.comms.response.PrinterStatusResponse;
@@ -27,6 +28,8 @@ import org.ah.robox.comms.response.PrinterStatusResponse;
  * @author Daniel Sendula
  */
 public class PrintStatusCommand {
+
+    private static final Logger logger = Logger.getLogger(PrintStatusCommand.class.getName());
 
     public static int ESTIMATE_MIN_LINES = 100; // 100 is arbirtary number that is greater than setup: heating heads/bed, home, short purge, etc...
 
@@ -61,7 +64,7 @@ public class PrintStatusCommand {
                 printHelp();
                 System.exit(0);
             } else {
-                System.err.println("Unknown option: '" + a + "'");
+                logger.severe("Unknown option: '" + a + "'");
                 printHelp();
                 System.exit(1);
             }
@@ -79,20 +82,20 @@ public class PrintStatusCommand {
         }
 
         if (!shortFlag) {
-            System.out.println("There a print in progress @ " + printer.getPrinterName() + "(" + printer.getPrinterChannel().getPrinterPath() + ")");
+            logger.info("There a print in progress @ " + printer.getPrinterName() + "(" + printer.getPrinterChannel().getPrinterPath() + ")");
         }
         if (jobFlag || allFlag) {
             if (shortFlag) {
-                System.out.println(printJob);
+                logger.info(printJob);
             } else {
-                System.out.println("    Job id      : '" + printJob + "'");
+                logger.info("    Job id      : '" + printJob + "'");
             }
         }
         if (currentLineFlag || allFlag) {
             if (shortFlag) {
-                System.out.println(printStatus.getLineNumber());
+                logger.info("" + printStatus.getLineNumber());
             } else {
-                System.out.println("    Current line: " + printStatus.getLineNumber());
+                logger.info("    Current line: " + printStatus.getLineNumber());
             }
         }
         if (totalLineFlag || allFlag) {
@@ -103,9 +106,9 @@ public class PrintStatusCommand {
 //                        + "Please use rbx status -f <robox.gcode file> with this job's file (job name '" + printJob + "')\n"
 //                        + "in order for number of lines to be calculated.");
                 if (shortFlag) {
-                    System.out.println("No .gcode file specified");
+                    logger.info("No .gcode file specified");
                 } else {
-                    System.out.println("    Total # line:  " + "Cannot return total number of lines as there is no .gcode file specified.\n"
+                    logger.info("    Total # line:  " + "Cannot return total number of lines as there is no .gcode file specified.\n"
                           + "Please use rbx status -f <robox.gcode file> with this job's file (job name '" + printJob + "')\n"
                           + "in order for number of lines to be calculated.");
                 }
@@ -113,25 +116,25 @@ public class PrintStatusCommand {
                 int totalLines = readNumberFromFile(configDir, linesFile);
 
                 if (shortFlag) {
-                    System.out.println(Integer.toString(totalLines));
+                    logger.info(Integer.toString(totalLines));
                 } else {
-                    System.out.println("    Total # line:  " + Integer.toString(totalLines));
+                    logger.info("    Total # line:  " + Integer.toString(totalLines));
                 }
             }
         }
 
         if (pauseStatusFlag || allFlag) {
             if (shortFlag) {
-                System.out.println(printStatus.getPause().getText());
+                logger.info(printStatus.getPause().getText());
             } else {
-                System.out.println("    Status      : " + printStatus.getPause().getText());
+                logger.info("    Status      : " + printStatus.getPause().getText());
             }
         }
         if (busyFlag || allFlag) {
             if (shortFlag) {
-                System.out.println(printStatus.isBusy());
+                logger.info("" + printStatus.isBusy());
             } else {
-                System.out.println("    Busy        : " + printStatus.isBusy());
+                logger.info("    Busy        : " + printStatus.isBusy());
             }
         }
         if (hasRunningJobs) {
@@ -140,12 +143,12 @@ public class PrintStatusCommand {
                     Estimate estimate = calculateEstimate(printJob, printStatus.getLineNumber(), System.currentTimeMillis());
                     String estimateTime = estimate.toString();
                     if (shortFlag) {
-                        System.out.println(estimateFlag);
+                        logger.info("" + estimateFlag);
                     } else {
-                        System.out.println("    Estimate    : " + estimateTime);
+                        logger.info("    Estimate    : " + estimateTime);
                     }
                 } catch (IOException e) {
-                    System.err.println(e.getMessage());
+                    logger.severe(e.getMessage());
                     System.exit(1);
                 }
             }
@@ -153,32 +156,32 @@ public class PrintStatusCommand {
     }
 
     public static void printHelp() {
-        System.out.println("Usage: rbx [<general-options>] status [<specific-options>]");
-        System.out.println("");
+        logger.info("Usage: rbx [<general-options>] status [<specific-options>]");
+        logger.info("");
         Main.printGeneralOptions();
-        System.out.println("");
+        logger.info("");
         Main.printSpecificOptions();
-        System.out.println("");
-        System.out.println("  -h | --help | -?     - this page");
-        System.out.println("  -a | --all           - displays all status information");
-        System.out.println("  -s | --short         - displays values only");
-        System.out.println("                         It is machine readable format.");
+        logger.info("");
+        logger.info("  -h | --help | -?     - this page");
+        logger.info("  -a | --all           - displays all status information");
+        logger.info("  -s | --short         - displays values only");
+        logger.info("                         It is machine readable format.");
 
-        System.out.println("  -e | --estimate      - displays estimate time until job completion.");
-        System.out.println("                         See -f/--file option for more details.");
-        System.out.println("  -j | --job           - displays job id");
-        System.out.println("  -b | --busy          - displays busy flag");
-        System.out.println("  -ps | --pause-status - displays pause status");
-        System.out.println("  -cl | --current-line - displays current line number");
-        System.out.println("  -tl | --total-lines  - displays total line number. Only if file was supplied.");
+        logger.info("  -e | --estimate      - displays estimate time until job completion.");
+        logger.info("                         See -f/--file option for more details.");
+        logger.info("  -j | --job           - displays job id");
+        logger.info("  -b | --busy          - displays busy flag");
+        logger.info("  -ps | --pause-status - displays pause status");
+        logger.info("  -cl | --current-line - displays current line number");
+        logger.info("  -tl | --total-lines  - displays total line number. Only if file was supplied.");
 
-        System.out.println("");
-        System.out.println("For estimate to work, this utility needs original xxx_robox.gcode file.");
-        System.out.println("See rbx upload command.");
-        System.out.println("");
-        System.out.println("More time passed, estimate might be more correct. Estimate is calculated");
-        System.out.println("by amount of lines processed per amount of time starting from when");
-        System.out.println("<jobid>.estimate file is created.");
+        logger.info("");
+        logger.info("For estimate to work, this utility needs original xxx_robox.gcode file.");
+        logger.info("See rbx upload command.");
+        logger.info("");
+        logger.info("More time passed, estimate might be more correct. Estimate is calculated");
+        logger.info("by amount of lines processed per amount of time starting from when");
+        logger.info("<jobid>.estimate file is created.");
     }
 
     /**
@@ -336,6 +339,7 @@ public class PrintStatusCommand {
             return res;
         }
 
+        @Override
         public String toString() {
             if (printState == EstimateState.PRINTING) {
                 return toString("%h:%m:%s");

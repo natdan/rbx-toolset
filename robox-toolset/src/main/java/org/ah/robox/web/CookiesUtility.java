@@ -74,6 +74,8 @@ public class CookiesUtility {
 
     public static class ParseException extends RuntimeException {
 
+        private static final long serialVersionUID = -3893933615037565747L;
+
         public ParseException(String msg) {
             super(msg);
         }

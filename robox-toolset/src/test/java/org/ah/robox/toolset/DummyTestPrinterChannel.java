@@ -24,23 +24,40 @@ import org.ah.robox.comms.PrinterChannel;
  */
 public class DummyTestPrinterChannel implements PrinterChannel {
 
+    private boolean open = false;
+
     public String getPrinterDeviceId() {
         return "dummy-robox";
     }
 
+    @Override
     public String getPrinterPath() {
         return "/dev/dummy-robox";
     }
 
+    @Override
     public InputStream getInputStream() {
         return null;
     }
 
+    @Override
     public OutputStream getOutputStream() {
         return null;
     }
 
+    @Override
+    public void open() {
+        open = true;
+    }
+
+    @Override
+    public boolean isOpen() {
+        return open;
+    }
+
+    @Override
     public void close() {
+        open = false;
     }
 
 }

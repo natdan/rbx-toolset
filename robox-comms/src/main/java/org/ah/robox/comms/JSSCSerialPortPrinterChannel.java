@@ -17,6 +17,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import jssc.ISerialPort;
+import jssc.LocalSerialPort;
 import jssc.SerialPortException;
 
 /**
@@ -25,16 +26,29 @@ import jssc.SerialPortException;
  */
 public class JSSCSerialPortPrinterChannel implements PrinterChannel {
 
-    private SerialPortsPrinterDiscovery parent;
     private String printerPath;
     private ISerialPort serialPort;
     private InputStream in;
     private OutputStream out;
 
-    public JSSCSerialPortPrinterChannel(SerialPortsPrinterDiscovery parent, String printerPath, ISerialPort serialPort) throws IOException {
-        this.parent = parent;
+    public JSSCSerialPortPrinterChannel(String printerPath) throws IOException {
         this.printerPath = printerPath;
-        this.serialPort = serialPort;
+    }
+
+    @Override
+    public String getPrinterPath() {
+        return printerPath;
+    }
+
+    @Override
+    public void open() throws IOException {
+        try {
+            serialPort = new LocalSerialPort(getPrinterPath());
+            serialPort.openPort();
+            serialPort.setParams(115200, 8, 1, 0);
+        } catch (SerialPortException e) {
+            throw new IOException(e);
+        }
 
         in = new InputStream() {
             @Override public int read() throws IOException {
@@ -53,6 +67,13 @@ public class JSSCSerialPortPrinterChannel implements PrinterChannel {
                 } catch (SerialPortException e) {
                     throw new IOException(e);
                 }
+            }
+
+            @Override public int available() {
+                try {
+                    return JSSCSerialPortPrinterChannel.this.serialPort.getInputBufferBytesCount();
+                } catch (SerialPortException ignore) { }
+                return 0;
             }
         };
 
@@ -82,29 +103,34 @@ public class JSSCSerialPortPrinterChannel implements PrinterChannel {
         };
     }
 
-    public String getPrinterPath() {
-        return printerPath;
+    @Override
+    public boolean isOpen() {
+        return serialPort != null;
     }
 
-
-    public InputStream getInputStream() {
+    @Override
+    public InputStream getInputStream() throws IOException {
+        if (serialPort == null) {
+            throw new IOException("Channel is not open; " +  getPrinterPath());
+        }
         return in;
     }
 
-    public OutputStream getOutputStream() {
+    @Override
+    public OutputStream getOutputStream() throws IOException {
+        if (serialPort == null) {
+            throw new IOException("Channel is not open; " +  getPrinterPath());
+        }
         return out;
     }
 
+    @Override
     public void close() {
-        try { in.close(); } catch (Exception ignore) {}
-        try { out.close(); } catch (Exception ignore) {}
-//        if (!System.getProperty("os.name").contains("Mac")) {
-            try {
-                serialPort.closePort();
-            } catch (SerialPortException e) {
-                e.printStackTrace();
-            }
-//        }
-        parent.closed(this);
+        if (serialPort != null) {
+            try { in.close(); } catch (Exception ignore) {}
+            try { out.close(); } catch (Exception ignore) {}
+            try { serialPort.closePort(); } catch (SerialPortException ignore) { }
+        }
+        serialPort = null;
     }
 }

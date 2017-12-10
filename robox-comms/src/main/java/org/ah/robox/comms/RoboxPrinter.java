@@ -37,7 +37,7 @@ public class RoboxPrinter implements Printer {
     private PrinterDetailsResponse printerDetails;
     private String printerId;
 
-    public RoboxPrinter(PrinterChannel printerChannel) {
+    public RoboxPrinter(PrinterChannel printerChannel) throws IOException {
         this.printerChannel = printerChannel;
 
         printerResponseFactory = new ResponseFactory(printerChannel.getInputStream());
@@ -60,18 +60,22 @@ public class RoboxPrinter implements Printer {
         }
     }
 
+    @Override
     public void close() {
         printerChannel.close();
     }
 
+    @Override
     public String getPrinterId() {
         return printerId;
     }
 
+    @Override
     public PrinterChannel getPrinterChannel() {
         return printerChannel;
     }
 
+    @Override
     public PrinterStatusResponse getPrinterStatus() throws IOException {
         printerRequestFactory.sendPrinterStatusRequest();
         Response response = printerResponseFactory.readResponse();
@@ -82,6 +86,7 @@ public class RoboxPrinter implements Printer {
         throw new UnexpectedPrinterResponse(response);
     }
 
+    @Override
     public StandardResponse reportErrors() throws IOException {
         printerRequestFactory.sendReportErrors();
         Response response = printerResponseFactory.readResponse();
@@ -92,6 +97,7 @@ public class RoboxPrinter implements Printer {
         throw new UnexpectedPrinterResponse(response);
     }
 
+    @Override
     public StandardResponse resetErrors() throws IOException {
         printerRequestFactory.sendResetErrors();
         Response response = printerResponseFactory.readResponse();
@@ -102,6 +108,7 @@ public class RoboxPrinter implements Printer {
         throw new UnexpectedPrinterResponse(response);
     }
 
+    @Override
     public StandardResponse pausePrinter() throws IOException {
         printerRequestFactory.sendPrinterPause();
         Response response = printerResponseFactory.readResponse();
@@ -112,6 +119,7 @@ public class RoboxPrinter implements Printer {
         throw new UnexpectedPrinterResponse(response);
     }
 
+    @Override
     public StandardResponse resumePrinter() throws IOException {
         printerRequestFactory.sendPrinterResume();
         Response response = printerResponseFactory.readResponse();
@@ -122,6 +130,7 @@ public class RoboxPrinter implements Printer {
         throw new UnexpectedPrinterResponse(response);
     }
 
+    @Override
     public StandardResponse abortPrint() throws IOException {
         printerRequestFactory.sendPrinterAbortPrint();
         Response response = printerResponseFactory.readResponse();
@@ -132,6 +141,7 @@ public class RoboxPrinter implements Printer {
         throw new UnexpectedPrinterResponse(response);
     }
 
+    @Override
     public GCodeResponse sendGCode(String gcode) throws IOException {
         printerRequestFactory.sendGCode(gcode);
         Response response = printerResponseFactory.readResponse();
@@ -142,6 +152,7 @@ public class RoboxPrinter implements Printer {
         throw new UnexpectedPrinterResponse(response);
     }
 
+    @Override
     public StandardResponse startPrint(String printJobId) throws IOException {
         printerRequestFactory.sendStartPrintJob(printJobId);
         Response response = printerResponseFactory.readResponse();
@@ -152,6 +163,7 @@ public class RoboxPrinter implements Printer {
         throw new UnexpectedPrinterResponse(response);
     }
 
+    @Override
     public PrintJobsResponse getPrintJobs() throws IOException {
         printerRequestFactory.sendGetPrintJobs();
         Response response = printerResponseFactory.readResponse();
@@ -162,6 +174,7 @@ public class RoboxPrinter implements Printer {
         throw new UnexpectedPrinterResponse(response);
     }
 
+    @Override
     public StandardResponse transmitPrintJob(String printJobId, Reader gcodeReader, TransmitCallback callback) throws IOException {
         StandardResponse standardResponse = null;
         printerRequestFactory.sendStartPrintJobTransfer(printJobId);
@@ -219,14 +232,17 @@ public class RoboxPrinter implements Printer {
         return standardResponse;
     }
 
+    @Override
     public String getPrinterName() {
         return printerDetails.getPrinterName();
     }
 
+    @Override
     public String getModel() {
         return printerDetails.getModel();
     }
 
+    @Override
     public String getSerialNumber() {
         return printerDetails.getSerialNumber();
     }

@@ -12,6 +12,7 @@
  *******************************************************************************/
 package org.ah.robox.comms;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
@@ -23,9 +24,13 @@ public interface PrinterChannel {
 
     String getPrinterPath();
 
-    InputStream getInputStream();
+    void open() throws IOException;
 
-    OutputStream getOutputStream();
+    boolean isOpen();
+
+    InputStream getInputStream() throws IOException;
+
+    OutputStream getOutputStream() throws IOException;
 
     void close();
 }

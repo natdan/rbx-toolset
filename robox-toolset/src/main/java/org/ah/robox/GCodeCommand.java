@@ -16,6 +16,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.List;
+import java.util.logging.Logger;
 
 import org.ah.robox.comms.Printer;
 import org.ah.robox.comms.response.GCodeResponse;
@@ -27,6 +28,8 @@ import org.ah.robox.comms.response.StandardResponse;
  * @author Daniel Sendula
  */
 public class GCodeCommand {
+
+    private static final Logger logger = Logger.getLogger(GCodeCommand.class.getName());
 
     public static void execute(Printer printer, List<String> args) throws Exception {
 
@@ -41,15 +44,13 @@ public class GCodeCommand {
             } else if ("-i".equals(a) || "--interactive".equals(a)) {
                 interactiveFlag = true;
             } else if (a.startsWith("-")) {
-                System.err.println("Unknown option: '" + a + "'");
+                logger.severe("Unknown option: '" + a + "'");
                 printHelp();
                 System.exit(1);
             } else {
-                if (Main.verboseFlag) {
-                    System.out.println("Sending gcode command: '" + a + "'");
-                }
+                logger.fine("Sending gcode command: '" + a + "'");
                 String response = sendGCode(printer, a);
-                System.out.println("A" + argNo + ": " +response);
+                logger.info("A" + argNo + ": " +response);
 
                 argNo = argNo + 1;
             }
@@ -70,11 +71,11 @@ public class GCodeCommand {
                         line = line.trim();
                         if (line.length() > 0) {
                             String response = sendGCode(printer, line);
-                            System.out.println("L" + lineNo + ": " + response);
+                            logger.info("L" + lineNo + ": " + response);
                         }
                         lineNo = lineNo + 1;
                     } catch (IOException e) {
-                        System.err.println("Error sending gcode command to printer; " + e.getMessage());
+                        logger.severe("Error sending gcode command to printer; " + e.getMessage());
                         System.exit(1);
                     }
 
@@ -109,15 +110,15 @@ public class GCodeCommand {
     }
 
     public static void printHelp() {
-        System.out.println("Usage: rbx [<general-options>] gcode [<specific-options>] [<gcode-commands>]");
-        System.out.println("");
+        logger.info("Usage: rbx [<general-options>] gcode [<specific-options>] [<gcode-commands>]");
+        logger.info("");
         Main.printGeneralOptions();
-        System.out.println("");
+        logger.info("");
         Main.printSpecificOptions();
-        System.out.println("");
-        System.out.println("All arguments that do not start with '-' will be processed as gcode commands");
-        System.out.println("and sent to the printer. Also, all sysin will be processed line by line and");
-        System.out.println("sent to the printer. Resposes are prefixed with 'A' + number of argument + ': '");
-        System.out.println("sent out or 'L' + number of line from sysin + ': ' (note trailing space).");
+        logger.info("");
+        logger.info("All arguments that do not start with '-' will be processed as gcode commands");
+        logger.info("and sent to the printer. Also, all sysin will be processed line by line and");
+        logger.info("sent to the printer. Resposes are prefixed with 'A' + number of argument + ': '");
+        logger.info("sent out or 'L' + number of line from sysin + ': ' (note trailing space).");
     }
 }

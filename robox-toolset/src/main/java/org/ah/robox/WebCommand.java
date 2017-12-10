@@ -21,6 +21,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.List;
+import java.util.logging.Logger;
 
 import org.ah.robox.comms.PrinterDiscovery;
 import org.ah.robox.web.WebServer;
@@ -31,6 +32,7 @@ import org.ah.robox.web.WebServer;
  * @author Daniel Sendula
  */
 public class WebCommand {
+    private static final Logger logger = Logger.getLogger(WebCommand.class.getName());
 
     public static void execute(PrinterDiscovery printerDiscovery, String printerId, List<String> args) throws Exception {
 
@@ -62,7 +64,7 @@ public class WebCommand {
                 try {
                     webServer.setPort(Integer.parseInt(a));
                 } catch (NumberFormatException e) {
-                    System.err.println("Bad port number '" + a + "'");
+                    logger.severe("Bad port number '" + a + "'");
                     System.exit(1);
                 }
                 portFlag = false;
@@ -77,7 +79,7 @@ public class WebCommand {
                 try {
                     webServer.setRefreshInterval(Integer.parseInt(a));
                 } catch (NumberFormatException e) {
-                    System.err.println("Bad number for status refresh interval '" + a + "'");
+                    logger.severe("Bad number for status refresh interval '" + a + "'");
                     System.exit(1);
                 }
                 refreshIntervalFlag = false;
@@ -85,7 +87,7 @@ public class WebCommand {
                 try {
                     webServer.setImageRefreshInterval(Integer.parseInt(a));
                 } catch (NumberFormatException e) {
-                    System.err.println("Bad number for image refresh interval '" + a + "'");
+                    logger.severe("Bad number for image refresh interval '" + a + "'");
                     System.exit(1);
                 }
                 imageRefreshIntervalFlag = false;
@@ -110,7 +112,7 @@ public class WebCommand {
                     webServer.setAutomaticRefresh(Integer.parseInt(a));
                     automaticRefrehsFlag = false;
                 } catch (NumberFormatException e) {
-                    System.err.println("Bad number for automatic refresh '" + a + "'");
+                    logger.severe("Bad number for automatic refresh '" + a + "'");
                     System.exit(1);
                 }
             } else if ("-p".equals(a) || "--port".equals(a)) {
@@ -135,19 +137,19 @@ public class WebCommand {
                 automaticRefrehsFlag = true;
             } else if ("start".equals(a)) {
                 if (statusFlag || stopFlag) {
-                    System.err.println("start/stop/status are mutually exclusive commands. Supply only one at the time.");
+                    logger.severe("start/stop/status are mutually exclusive commands. Supply only one at the time.");
                     System.exit(1);
                 }
                 startFlag = true;
             } else if ("stop".equals(a)) {
                 if (statusFlag || startFlag) {
-                    System.err.println("start/stop/status are mutually exclusive commands. Supply only one at the time.");
+                    logger.severe("start/stop/status are mutually exclusive commands. Supply only one at the time.");
                     System.exit(1);
                 }
                 stopFlag = true;
             } else if ("status".equals(a)) {
                 if (startFlag || stopFlag) {
-                    System.err.println("start/stop/status are mutually exclusive commands. Supply only one at the time.");
+                    logger.severe("start/stop/status are mutually exclusive commands. Supply only one at the time.");
                     System.exit(1);
                 }
                 statusFlag = true;
@@ -155,44 +157,44 @@ public class WebCommand {
                 printHelp();
                 System.exit(0);
             } else {
-                System.err.println("Unknown option: '" + a + "'");
+                logger.severe("Unknown option: '" + a + "'");
                 printHelp();
                 System.exit(1);
             }
         }
         if (postRefreshCommandFlag) {
-            System.err.println("Missing post refresh command.");
+            logger.severe("Missing post refresh command.");
             System.exit(1);
         } else if (imageCommandFlag) {
-            System.err.println("Missing image command inverval.");
+            logger.severe("Missing image command inverval.");
             System.exit(1);
         } else if (imageRefreshIntervalFlag) {
-            System.err.println("Missing image refresh inverval.");
+            logger.severe("Missing image refresh inverval.");
             System.exit(1);
         } else if (refreshIntervalFlag) {
-            System.err.println("Missing refresh interval.");
+            logger.severe("Missing refresh interval.");
             System.exit(1);
         } else if (portFlag) {
-            System.err.println("Missing port.");
+            logger.severe("Missing port.");
             System.exit(1);
         } else if (refreshCommandFormatFlag) {
-            System.err.println("Missing refresh command format.");
+            logger.severe("Missing refresh command format.");
             System.exit(1);
         } else if (templateFileFlag) {
-            System.err.println("Missing template file format.");
+            logger.severe("Missing template file format.");
             System.exit(1);
         } else if (staticDirFlag) {
-            System.err.println("Missing static directory.");
+            logger.severe("Missing static directory.");
             System.exit(1);
         } else if (automaticRefrehsFlag) {
-            System.err.println("Missing automatic refresh value.");
+            logger.severe("Missing automatic refresh value.");
             System.exit(1);
         }
 
         if (templateFileName != null) {
             webServer.setTemplateFile(new File(templateFileName));
             if (!webServer.getTemplateFile().exists()) {
-                System.err.println("Template file does not exist '" + templateFileName + "'.");
+                logger.severe("Template file does not exist '" + templateFileName + "'.");
                 System.exit(1);
             }
         }
@@ -219,7 +221,7 @@ public class WebCommand {
                 File portFile = serverPortFile();
                 if (portFile.exists()) {
                     if (!portFile.delete()) {
-                        System.err.println("Cannot delete lock file " + portFile.getAbsolutePath());
+                        logger.severe("Cannot delete lock file " + portFile.getAbsolutePath());
                         System.exit(-1);
                     }
                 }
@@ -232,7 +234,7 @@ public class WebCommand {
                         fw.close();
                     }
 
-                    System.out.println("Started web server at " + webServer.getAddress().getHostName() + ":" + webServer.getPort());
+                    logger.info("Started web server at " + webServer.getAddress().getHostName() + ":" + webServer.getPort());
                     boolean stop = false;
                     while (!stop) {
                         try {
@@ -258,7 +260,7 @@ public class WebCommand {
                         }
                     }
                 } catch (Exception e) {
-                    System.err.println("Cannot create lock file " + portFile.getAbsolutePath());
+                    logger.severe("Cannot create lock file " + portFile.getAbsolutePath());
                     error = true;
                 }
             } finally {
@@ -320,29 +322,29 @@ public class WebCommand {
                             byte[] response = new byte[5];
                             int r = socket.getInputStream().read(response);
                             if (r == 5 && "PONG\n".equals(new String(response, "US-ASCII"))) {
-                                System.out.println("Server is working.");
+                                logger.info("Server is working.");
                                 error = false;
                             } else {
-                                System.err.println("Server appears to be working but got wrong response.");
+                                logger.severe("Server appears to be working but got wrong response.");
                             }
                         } catch (Exception e) {
-                            System.err.println("Server appears to be working but doesn't respond to stop requests.");
+                            logger.severe("Server appears to be working but doesn't respond to stop requests.");
                         }
                     } catch (Exception e) {
-                        System.err.println("Server appears to be working but cannot contact it.");
+                        logger.severe("Server appears to be working but cannot contact it.");
                     }
                 } finally {
                     socket.close();
                 }
             } catch (Exception e) {
-                System.err.println("Server seems not to be working. Deleting stale port lock file.");
+                logger.severe("Server seems not to be working. Deleting stale port lock file.");
                 File f = serverPortFile();
                 if (f.exists()) {
                     f.delete();
                 }
             }
         } else {
-            System.err.println("Server is not working.");
+            logger.severe("Server is not working.");
         }
         if (error) {
             System.exit(-1);
@@ -354,11 +356,11 @@ public class WebCommand {
      */
     private static void doStartWebServerInSeparateProcess() {
         RuntimeMXBean runtimeMxBean = ManagementFactory.getRuntimeMXBean();
-        System.out.println("ARGS: " + runtimeMxBean.getInputArguments());
-        System.out.println("Command: " + System.getProperty("sun.java.command"));
-        System.out.println("x: " + ManagementFactory.getRuntimeMXBean().getName());
+        logger.info("ARGS: " + runtimeMxBean.getInputArguments());
+        logger.info("Command: " + System.getProperty("sun.java.command"));
+        logger.info("x: " + ManagementFactory.getRuntimeMXBean().getName());
 
-        System.err.println("This function is still not implemented.");
+        logger.severe("This function is still not implemented.");
         System.exit(-1);
     }
 
@@ -380,29 +382,29 @@ public class WebCommand {
                             byte[] response = new byte[3];
                             int r = socket.getInputStream().read(response);
                             if (r == 3 && "OK\n".equals(new String(response, "US-ASCII"))) {
-                                System.out.println("Server confirmed it stopped.");
+                                logger.info("Server confirmed it stopped.");
                                 error = false;
                             } else {
-                                System.err.println("Server appears to be working but got wrong response.");
+                                logger.severe("Server appears to be working but got wrong response.");
                             }
                         } catch (Exception e) {
-                            System.err.println("Server appears to be working but doesn't respond to stop requests.");
+                            logger.severe("Server appears to be working but doesn't respond to stop requests.");
                         }
                     } catch (Exception e) {
-                        System.err.println("Server appears to be working but cannot contact it.");
+                        logger.severe("Server appears to be working but cannot contact it.");
                     }
                 } finally {
                     socket.close();
                 }
             } catch (Exception e) {
-                System.err.println("Server seems not to be working");
+                logger.severe("Server seems not to be working");
                 File f = serverPortFile();
                 if (f.exists()) {
                     f.delete();
                 }
             }
         } else {
-            System.err.println("Cannot find port lock file. Server appears not to be working.");
+            logger.severe("Cannot find port lock file. Server appears not to be working.");
         }
         if (error) {
             System.exit(-1);
@@ -410,121 +412,121 @@ public class WebCommand {
     }
 
     public static void printHelp() {
-        System.out.println("Usage: rbx [<general-options>] web [<specific-options>] [<command>]");
-        System.out.println("");
-        System.out.println("  General options are one of these:");
-        System.out.println("  -v | --verbose   - increases voutput erbosity level");
-        System.out.println("  -d | --debug     - increases debug level");
-        System.out.println("");
+        logger.info("Usage: rbx [<general-options>] web [<specific-options>] [<command>]");
+        logger.info("");
+        logger.info("  General options are one of these:");
+        logger.info("  -v | --verbose   - increases voutput erbosity level");
+        logger.info("  -d | --debug     - increases debug level");
+        logger.info("");
         Main.printSpecificOptions();
-        System.out.println("");
-        System.out.println("  -h | --help | -?     - this page");
-        System.out.println("  -a | --all           - displays all status information");
-        System.out.println("  -s | --short         - displays values only");
-        System.out.println("                         It is machine readable format.");
+        logger.info("");
+        logger.info("  -h | --help | -?     - this page");
+        logger.info("  -a | --all           - displays all status information");
+        logger.info("  -s | --short         - displays values only");
+        logger.info("                         It is machine readable format.");
 
-        System.out.println("  -p | --port                     - port to start web server.");
-        System.out.println("  -rs | --refresh-status-interval <value-in-seconds>");
-        System.out.println("        Refresh status interval in seconds. It is how often printer is going");
-        System.out.println("        to be queried for the status. Default is 15 seconds.");
-        System.out.println("  -ri | --refresh-image-interval <value-in-seconds>");
-        System.out.println("        Refresh image interval in seconds. It is how image is fetched is going");
-        System.out.println("        to be queried for the status. Also, if on RPi and raspistill is detected");
-        System.out.println("        it will automatically be used. Default is 5 seconds");
-        System.out.println("  -ic | --image-command <shell-command>");
-        System.out.println("        Imaage command. This is shell command to be used to fetch image.");
-        System.out.println("        Command should send image data in jpg format to stdout.");
-        System.out.println("  -pc | --post-refresh-command <shell-command>");
-        System.out.println("        Comamnd to be called after printer status was fetched.");
-        System.out.println("        It will be called with estimage format string as first parameter.");
-        System.out.println("  -cf | --post-refresh-command-format <format-string>");
-        System.out.println("        Format post refresh command is going to get estimate in.");
-        System.out.println("        Placeholders are %c - command, %h -hours, %m - minutes (in.");
-        System.out.println("        two digit format), %s - seconds (in two digit format).");
-        System.out.println("        Default format is %c: %h:%m");
-        System.out.println("  -ac | --allow-commands ");
-        System.out.println("        If set web pages will allow commaindg printer:");
-        System.out.println("        sending pause, resume and abort commands.");
-        System.out.println("  -t  | --template-file <file>");
-        System.out.println("        Template html file for status file. See");
-        System.out.println("        -sf/--static-files switch for extra resources like css/images...");
-        System.out.println("  -sf | --static-files <directory>");
-        System.out.println("        Directory where static files are stored.");
-        System.out.println("        They are going to be served from root of web app ('/').");
-        System.out.println("  -ar | --automatic-refresh <value-in-seconds>");
-        System.out.println("        Enables internal template to create html page refresh. External templates");
-        System.out.println("        can utilise it by adding ${automatic-refresh} placeholder in html head part.");
-        System.out.println("");
-        System.out.println("Commands are optional. If none specified then web server will start in current process.");
-        System.out.println("");
-        System.out.println("  start  - starts the server in background. Not implemented yet.");
-        System.out.println("  status - displays status of the server.");
-        System.out.println("  stop   - stops the server.");
-        System.out.println("");
-        System.out.println("");
-        System.out.println("Template file should have following placeholders:");
-        System.out.println("");
-        System.out.println("${status}   - printing status (\"Unknown\", \"Working\", \"Pausing\", \"Paused\", \"Resuming\")");
-        System.out.println("${busy}     - is printer busy or not (\"true\", \"false\"). Can be used directly in javascript.");
-        System.out.println("${job_id}   - printer job id.");
-        System.out.println("${error_msg}      - previous request error message");
-        System.out.println("${estimate}       - estimate time in %h:%m:%s format");
-        System.out.println("${estimate_hours} - estimate time hours");
-        System.out.println("${estimate_mins}  - estimate time minutes (with leading zero)");
-        System.out.println("${estimate_secs}  - estimate time seconds (with leading zero)");
-        System.out.println("${current_line}   - current line");
-        System.out.println("${total_lines}    - total lines");
-        System.out.println("${current_line_and_total_line} - current line followed, optionally, with '/' and total lines");
-        System.out.println("${all_printers_link}           - link (or empty) to url with list of all printers.");
-        System.out.println("                                 It is set to empty if one or no printers available.");
-        System.out.println("${capture_image_tag}           - capture image tag. It is set to <img src=\"/capture.jpg\"/>");
-        System.out.println("                                 when capture is enabled or empty string if not.");
-        System.out.println("${capture_image_css_display}   - css for display attribute for capture image section.");
-        System.out.println("                                 It is set to inline when capture is enabled or none if not.");
-        System.out.println("${commands_css_display}        - css for display attribute for commands section.");
-        System.out.println("                                 It is set to inline when commands are enabled or none if not.");
-        System.out.println("${printers_list}               - applicable only to printers page - list of <li> tags");
-        System.out.println("                                 with links to known printers. Not connected printers will");
-        System.out.println("                                 have no links associanted.");
-        System.out.println("${automatic-refresh}           - tag for html head. It will be empty if -ar|--automatic-refresh");
-        System.out.println("                                 option is not added. ");
+        logger.info("  -p | --port                     - port to start web server.");
+        logger.info("  -rs | --refresh-status-interval <value-in-seconds>");
+        logger.info("        Refresh status interval in seconds. It is how often printer is going");
+        logger.info("        to be queried for the status. Default is 15 seconds.");
+        logger.info("  -ri | --refresh-image-interval <value-in-seconds>");
+        logger.info("        Refresh image interval in seconds. It is how image is fetched is going");
+        logger.info("        to be queried for the status. Also, if on RPi and raspistill is detected");
+        logger.info("        it will automatically be used. Default is 5 seconds");
+        logger.info("  -ic | --image-command <shell-command>");
+        logger.info("        Imaage command. This is shell command to be used to fetch image.");
+        logger.info("        Command should send image data in jpg format to stdout.");
+        logger.info("  -pc | --post-refresh-command <shell-command>");
+        logger.info("        Comamnd to be called after printer status was fetched.");
+        logger.info("        It will be called with estimage format string as first parameter.");
+        logger.info("  -cf | --post-refresh-command-format <format-string>");
+        logger.info("        Format post refresh command is going to get estimate in.");
+        logger.info("        Placeholders are %c - command, %h -hours, %m - minutes (in.");
+        logger.info("        two digit format), %s - seconds (in two digit format).");
+        logger.info("        Default format is %c: %h:%m");
+        logger.info("  -ac | --allow-commands ");
+        logger.info("        If set web pages will allow commaindg printer:");
+        logger.info("        sending pause, resume and abort commands.");
+        logger.info("  -t  | --template-file <file>");
+        logger.info("        Template html file for status file. See");
+        logger.info("        -sf/--static-files switch for extra resources like css/images...");
+        logger.info("  -sf | --static-files <directory>");
+        logger.info("        Directory where static files are stored.");
+        logger.info("        They are going to be served from root of web app ('/').");
+        logger.info("  -ar | --automatic-refresh <value-in-seconds>");
+        logger.info("        Enables internal template to create html page refresh. External templates");
+        logger.info("        can utilise it by adding ${automatic-refresh} placeholder in html head part.");
+        logger.info("");
+        logger.info("Commands are optional. If none specified then web server will start in current process.");
+        logger.info("");
+        logger.info("  start  - starts the server in background. Not implemented yet.");
+        logger.info("  status - displays status of the server.");
+        logger.info("  stop   - stops the server.");
+        logger.info("");
+        logger.info("");
+        logger.info("Template file should have following placeholders:");
+        logger.info("");
+        logger.info("${status}   - printing status (\"Unknown\", \"Working\", \"Pausing\", \"Paused\", \"Resuming\")");
+        logger.info("${busy}     - is printer busy or not (\"true\", \"false\"). Can be used directly in javascript.");
+        logger.info("${job_id}   - printer job id.");
+        logger.info("${error_msg}      - previous request error message");
+        logger.info("${estimate}       - estimate time in %h:%m:%s format");
+        logger.info("${estimate_hours} - estimate time hours");
+        logger.info("${estimate_mins}  - estimate time minutes (with leading zero)");
+        logger.info("${estimate_secs}  - estimate time seconds (with leading zero)");
+        logger.info("${current_line}   - current line");
+        logger.info("${total_lines}    - total lines");
+        logger.info("${current_line_and_total_line} - current line followed, optionally, with '/' and total lines");
+        logger.info("${all_printers_link}           - link (or empty) to url with list of all printers.");
+        logger.info("                                 It is set to empty if one or no printers available.");
+        logger.info("${capture_image_tag}           - capture image tag. It is set to <img src=\"/capture.jpg\"/>");
+        logger.info("                                 when capture is enabled or empty string if not.");
+        logger.info("${capture_image_css_display}   - css for display attribute for capture image section.");
+        logger.info("                                 It is set to inline when capture is enabled or none if not.");
+        logger.info("${commands_css_display}        - css for display attribute for commands section.");
+        logger.info("                                 It is set to inline when commands are enabled or none if not.");
+        logger.info("${printers_list}               - applicable only to printers page - list of <li> tags");
+        logger.info("                                 with links to known printers. Not connected printers will");
+        logger.info("                                 have no links associanted.");
+        logger.info("${automatic-refresh}           - tag for html head. It will be empty if -ar|--automatic-refresh");
+        logger.info("                                 option is not added. ");
 
-        System.out.println("${x_limit}       - x limit switch (on/off)");
-        System.out.println("${y_limit}       - y limit switch (on/off)");
-        System.out.println("${z_limit}       - z limit switch (on/off)");
+        logger.info("${x_limit}       - x limit switch (on/off)");
+        logger.info("${y_limit}       - y limit switch (on/off)");
+        logger.info("${z_limit}       - z limit switch (on/off)");
 
-        System.out.println("${filament_1}    - filament 1 switch (on/off)");
-        System.out.println("${filament_2}    - filament 2 switch (on/off)");
+        logger.info("${filament_1}    - filament 1 switch (on/off)");
+        logger.info("${filament_2}    - filament 2 switch (on/off)");
 
-        System.out.println("${nozzle_switch} - nozzle switch (on/off)");
-        System.out.println("${door_open}   - door closed switch (on/off)");
-        System.out.println("${reel_button}   - reel button switch (on/off)");
+        logger.info("${nozzle_switch} - nozzle switch (on/off)");
+        logger.info("${door_open}   - door closed switch (on/off)");
+        logger.info("${reel_button}   - reel button switch (on/off)");
 
-        System.out.println("${nozzle_temp}           - nozzle temperature");
-        System.out.println("${nozzle_set_temp}       - nozzle set temperature");
-        System.out.println("${nozzle_temp_combined}  - nozzle + nozzle set temperature divided by '/'");
+        logger.info("${nozzle_temp}           - nozzle temperature");
+        logger.info("${nozzle_set_temp}       - nozzle set temperature");
+        logger.info("${nozzle_temp_combined}  - nozzle + nozzle set temperature divided by '/'");
 
-        System.out.println("${bed_temp}              - bed temperature");
-        System.out.println("${bed_set_temp}          - bed set temperature");
-        System.out.println("${nozzle_temp_combined}  - bed + bed set temperature divided by '/'");
+        logger.info("${bed_temp}              - bed temperature");
+        logger.info("${bed_set_temp}          - bed set temperature");
+        logger.info("${nozzle_temp_combined}  - bed + bed set temperature divided by '/'");
 
-        System.out.println("${ambient_temp}          - ambient temperature");
-        System.out.println("${ambient_set_temp}      - ambient set temperature");
-        System.out.println("${ambient_temp_combined} - ambient temperature + ambient set temperature divided by '/");
+        logger.info("${ambient_temp}          - ambient temperature");
+        logger.info("${ambient_set_temp}      - ambient set temperature");
+        logger.info("${ambient_temp_combined} - ambient temperature + ambient set temperature divided by '/");
 
-        System.out.println("${fan}           - fan (on/off)");
-        System.out.println("${head_Fan}      - head fan (on/off)");
+        logger.info("${fan}           - fan (on/off)");
+        logger.info("${head_Fan}      - head fan (on/off)");
 
-        System.out.println("${x_position}    - x position");
-        System.out.println("${y_position}    - y position");
-        System.out.println("${z_position}    - z position");
+        logger.info("${x_position}    - x position");
+        logger.info("${y_position}    - y position");
+        logger.info("${z_position}    - z position");
 
-        System.out.println("${filament_nultiplier}  - filament multiplier");
-        System.out.println("${feed_rate_nultiplier} - feed rate multiplier");
+        logger.info("${filament_nultiplier}  - filament multiplier");
+        logger.info("${feed_rate_nultiplier} - feed rate multiplier");
 
-        System.out.println("${temp_state}    - temperature state ('working', 'cooling', 'heating bed' or 'heating nozzles')");
+        logger.info("${temp_state}    - temperature state ('working', 'cooling', 'heating bed' or 'heating nozzles')");
 
-        System.out.println("");
+        logger.info("");
 
     }
 }

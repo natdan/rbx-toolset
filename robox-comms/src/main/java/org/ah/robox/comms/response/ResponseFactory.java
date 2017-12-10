@@ -16,6 +16,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
+import java.util.Base64;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.ah.robox.comms.utils.PrintHex;
 
@@ -24,14 +27,13 @@ import org.ah.robox.comms.utils.PrintHex;
  * @author Daniel Sendula
  */
 public class ResponseFactory {
+    private static final Logger logger = Logger.getLogger(ResponseFactory.class.getName());
 
     public static final int GET_PRINT_JOBS_RESPONSE = 0xe0;
     public static final int PRINTER_STATUS_RESPONSE = 0xe1;
     public static final int STANDARD_RESPONSE = 0xe3;
     public static final int PRINTER_DETAILS_RESPONSE = 0xe5;
     public static final int GCODE_RESPONSE = 0xe7;
-
-    public static boolean DEBUG = false;
 
     private InputStream in;
     private byte[] buffer;
@@ -192,6 +194,8 @@ public class ResponseFactory {
             }
 
         } else {
+            buffer = new byte[in.available()];
+            readBuffer(in, buffer);
             return new UnknownResponse(r);
         }
         return response;
@@ -205,10 +209,8 @@ public class ResponseFactory {
             read = read + r;
         }
 
-        if (DEBUG) {
-            System.out.println("Received packet:");
-            PrintHex.printHex(buffer);
-        }
+        logger.finer("Received packet:");
+        PrintHex.printHex(logger, Level.FINER, buffer);
     }
 
     protected void skip(int size) {
@@ -221,7 +223,10 @@ public class ResponseFactory {
 
     protected void extractString(String propertyName, int size, Converter<String, ?> converter) {
         try {
-            String str = new String(buffer, ptr, size, "US-ASCII");
+            String str = new String(buffer, ptr, size, "US-ASCII").trim();
+
+            str = decode(str);
+
             str = str.replace(Character.valueOf((char)127).toString(), "");
             ptr = ptr + size;
 
@@ -231,6 +236,17 @@ public class ResponseFactory {
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private String decode(String str) {
+        try {
+            byte[] decoded = Base64.getDecoder().decode(str);
+            String encoded = new String(Base64.getEncoder().encode(decoded));
+            if (encoded.equals(str)) {
+                str = new String(decoded);
+            }
+        } catch (Exception ignore) {}
+        return str;
     }
 
     protected void extractByte(String propertyName, Converter<Byte, ?> converter) {
@@ -280,9 +296,9 @@ public class ResponseFactory {
             setter.invoke(response, value);
         } catch (IllegalArgumentException e) {
             if (value != null) {
-                System.err.println("Got " + value + " of " + value.getClass() + " and tried to set through method " + setter);
+                logger.warning("Got " + value + " of " + value.getClass() + " and tried to set through method " + setter);
             } else {
-                System.err.println("Got null and tried to set through method " + setter);
+                logger.warning("Got null and tried to set through method " + setter);
             }
             throw new RuntimeException(e);
         } catch (Exception e) {
@@ -304,14 +320,17 @@ public class ResponseFactory {
     }
 
     public static class NullStringConverter implements Converter<String, String> {
+        @Override
         public String convert(String source) { return source; }
     }
 
     public static class TrimStringConverter implements Converter<String, String> {
+        @Override
         public String convert(String source) { return source != null ? source.trim() : source; }
     }
 
     public static class HexStringToInteger implements Converter<String, Integer> {
+        @Override
         public Integer convert(String source) {
             int i = 0;
             try {
@@ -323,6 +342,7 @@ public class ResponseFactory {
     }
 
     public static class StringToInteger implements Converter<String, Integer> {
+        @Override
         public Integer convert(String source) {
             int i = 0;
             try {
@@ -334,6 +354,7 @@ public class ResponseFactory {
     }
 
     public static class StringToPrinterPause implements Converter<String, PrinterPause> {
+        @Override
         public PrinterPause convert(String source) {
             int i = -1;
             try {
@@ -352,6 +373,7 @@ public class ResponseFactory {
     }
 
     public static class StringToTemperatureState implements Converter<String, TemperatureState> {
+        @Override
         public TemperatureState convert(String source) {
             int i = -1;
             try {
@@ -370,6 +392,7 @@ public class ResponseFactory {
     }
 
     public static class ByteToBooleanConverter implements Converter<Byte, Boolean> {
+        @Override
         public Boolean convert(Byte source) { return (source & 1) != 0; }
     }
 

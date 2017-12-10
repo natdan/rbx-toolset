@@ -13,6 +13,7 @@
 package org.ah.robox;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 import org.ah.robox.comms.Printer;
 import org.ah.robox.comms.response.PrintJobsResponse;
@@ -23,13 +24,16 @@ import org.ah.robox.comms.response.PrintJobsResponse;
  * @author Daniel Sendula
  */
 public class GetPrintJobsCommand {
+
+    private static final Logger logger = Logger.getLogger(GetPrintJobsCommand.class.getName());
+
     public static void execute(Printer printer, List<String> args) throws Exception {
         for (String a : args) {
             if ("-?".equals(a) || "-h".equals(a) || "--help".equals(a)) {
                 printHelp();
                 System.exit(0);
             } else {
-                System.err.println("Unknown option: '" + a + "'");
+                logger.warning("Unknown option: '" + a + "'");
                 printHelp();
                 System.exit(1);
             }
@@ -38,21 +42,21 @@ public class GetPrintJobsCommand {
         PrintJobsResponse response = printer.getPrintJobs();
 
         if (response.getPrintJobs().size() == 0) {
-            System.err.println("There are no print jobs");
+            logger.warning("There are no print jobs");
         } else {
             int i = 1;
             for (String printJob : response.getPrintJobs()) {
-                System.out.println(i + ": " + printJob);
+                logger.info(i + ": " + printJob);
                 i = i + 1;
             }
         }
     }
 
     public static void printHelp() {
-        System.out.println("Usage: rbx [<general-options>] jobs [<specific-options>]");
-        System.out.println("");
+        logger.info("Usage: rbx [<general-options>] jobs [<specific-options>]");
+        logger.info("");
         Main.printGeneralOptions();
-        System.out.println("");
+        logger.info("");
         Main.printSpecificOptions();
     }
 }

@@ -17,6 +17,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.ah.robox.Main;
 
@@ -26,6 +28,8 @@ import org.ah.robox.Main;
  * @author Daniel Sendula
  */
 public class ImageCache {
+
+    private static final Logger logger = Logger.getLogger(ImageCache.class.getName());
 
     private long lastInvoked;
     private int interval = 5;
@@ -80,10 +84,10 @@ public class ImageCache {
 
                 return buf.toByteArray();
             } catch (IOException e) {
-                if (Main.debugFlag) {
-                    e.printStackTrace(System.err);
-                } else if (Main.verboseFlag) {
-                    System.err.println(e.getMessage());
+                if (Main.logLevel.intValue() <= Level.FINER.intValue()) {
+                    logger.log(Level.FINER, "", e);
+                } else {
+                    logger.log(Level.FINE, e.getMessage());
                 }
                 StringWriter err = new StringWriter();
                 PrintWriter printWriter = new PrintWriter(err);

@@ -21,6 +21,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.logging.Logger;
 
 /**
  *
@@ -28,6 +29,7 @@ import java.util.Arrays;
  * @author Daniel Sendula
  */
 public class SharedLibraries {
+    private static final Logger logger = Logger.getLogger(SharedLibraries.class.getName());
 
     public static final String JAVA_NATIVE_LIB_TEMP_DIR = "/java-native-libs/";
 
@@ -135,7 +137,7 @@ public class SharedLibraries {
         } else if (thisClassResource.toString().startsWith("file:")) {
             path = thisClassResource.toString();
         } else {
-            System.err.println("Cannot work with classes started from URL: " + thisClassResource);
+            logger.severe("Cannot work with classes started from URL: " + thisClassResource);
             System.exit(1);
             path = "";
         }

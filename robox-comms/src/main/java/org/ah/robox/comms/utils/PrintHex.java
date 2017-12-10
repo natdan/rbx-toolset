@@ -12,57 +12,62 @@
  *******************************************************************************/
 package org.ah.robox.comms.utils;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  *
  * @author Daniel Sendula
  */
 public class PrintHex {
 
-    public static void printHex(byte[] buffer) {
+    public static void printHex(Logger logger, Level level, byte[] buffer) {
         int readSize = buffer.length;
         int ptr = 0;
         while (ptr < readSize) {
+            StringBuilder builder = new StringBuilder();
             String adr = Integer.toString(ptr, 16);
-            System.out.print("        ".substring(0, 8 - adr.length()));
-            System.out.print(adr);
-            System.out.print(": ");
+            builder.append("        ".substring(0, 8 - adr.length()));
+            builder.append(adr);
+            builder.append(": ");
             int ptr2 = 0;
             while (ptr + ptr2 < readSize && ptr2 < 16) {
                 int b = buffer[ptr + ptr2];
                 if (b < 0) { b = 256 + b; }
                 String a = Integer.toString(b, 16);
                 if (a.length() == 1) { a = "0" + a; }
-                System.out.print(a);
-                System.out.print(' ');
+                builder.append(a);
+                builder.append(' ');
                 if (ptr2 == 7) {
-                    System.out.print(' ');
+                    builder.append(' ');
                 }
                 ptr2 = ptr2 + 1;
             }
             while (ptr2 < 16) {
-                System.out.print("   ");
+                builder.append("   ");
                 if (ptr2 == 7) {
-                    System.out.print(' ');
+                    builder.append(' ');
                 }
                 ptr2 = ptr2 + 1;
             }
-            System.out.print(" |");
+            builder.append(" |");
 
             ptr2 = 0;
             while (ptr + ptr2 < readSize && ptr2 < 16) {
                 int b = buffer[ptr + ptr2];
                 if (b >= 32 && b < 128) {
-                    System.out.print((char)b);
+                    builder.append((char)b);
                 } else {
-                    System.out.print('.');
+                    builder.append('.');
                 }
                 ptr2 = ptr2 + 1;
             }
             while (ptr2 < 16) {
-                System.out.print(' ');
+                builder.append(' ');
                 ptr2 = ptr2 + 1;
             }
-            System.out.println("|");
+            builder.append("|");
+            logger.log(level, builder.toString());
             ptr = ptr + 16;
         }
     }

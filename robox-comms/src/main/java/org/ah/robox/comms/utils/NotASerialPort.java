@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 Creative Sphere Limited.
+ * Copyright (c) 2014-2017 Creative Sphere Limited.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,32 +10,23 @@
  *
  *
  *******************************************************************************/
-package org.ah.robox.comms;
+package org.ah.robox.comms.utils;
 
 import java.io.IOException;
-
-import org.ah.robox.comms.response.Response;
 
 /**
  *
  * @author Daniel Sendula
  */
-public class UnexpectedPrinterResponse extends IOException {
+public class NotASerialPort extends IOException {
 
-    private static final long serialVersionUID = -1252446239424536639L;
+    private static final long serialVersionUID = 6306999240412050845L;
 
-    private Response response;
-
-    public UnexpectedPrinterResponse(Response response) {
-        this.response = response;
+    public NotASerialPort(String message) {
+        super(message);
     }
 
-    @Override
-    public String getMessage() {
-        return "Unexpected printer response " + getResponse().toString();
-    }
-
-    public Response getResponse() {
-        return response;
+    public NotASerialPort(String message, Throwable cause) {
+        super(message, cause);
     }
 }

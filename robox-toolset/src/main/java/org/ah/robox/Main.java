@@ -13,13 +13,28 @@
 package org.ah.robox;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Formatter;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 
+import org.ah.robox.comms.AggregatedPrinterDiscovery;
+import org.ah.robox.comms.BasePrinterDiscovery;
+import org.ah.robox.comms.JSSCPrinterDiscovery;
 import org.ah.robox.comms.Printer;
-import org.ah.robox.comms.SerialPortsPrinterDiscovery;
-import org.ah.robox.comms.response.ResponseFactory;
+import org.ah.robox.comms.PrinterDiscovery;
+import org.ah.robox.comms.RemotePrinterDiscovery;
+import org.ah.robox.comms.RxTxPrinterDiscovery;
 import org.ah.robox.comms.response.StandardResponse;
+import org.ah.robox.proxy.ProxyCommand;
 
 /**
  *
@@ -28,15 +43,37 @@ import org.ah.robox.comms.response.StandardResponse;
  */
 public class Main {
 
-    public static boolean verboseFlag = false;
-    public static boolean debugFlag = false;
+    public static Level logLevel = Level.INFO;
     public static boolean remoteFlag = false;
 
+    public static Logger logger;
+
     public static void main(String[] args) throws Exception {
+
+        Formatter formatter = new LocalFormatter();
+
+        Handler consoleHandler = new ConsoleHandler() {
+            { setOutputStream(System.out); }
+        };
+        consoleHandler.setFormatter(formatter);
+        consoleHandler.setLevel(Level.FINEST);
+
+        Logger rootLogger = LogManager.getLogManager().getLogger("");
+
+        for (Handler h : rootLogger.getHandlers()) {
+            rootLogger.removeHandler(h);
+        }
+        rootLogger.addHandler(consoleHandler);
+        Logger.getAnonymousLogger().addHandler(consoleHandler);
+
+        logger = Logger.getLogger("NetworkSerialPort");
+
         String command = null;
 
         boolean furtherArgsFlag = false;
         boolean printerFlag = false;
+        boolean jsscFlag = true;
+        boolean rxtxFlag = false;
         String printerId = null;
 
         List<String> furtherArgs = new ArrayList<String>();
@@ -46,12 +83,22 @@ public class Main {
             } else if (printerFlag) {
                 printerId = arg;
                 printerFlag = false;
+            } else if ("-j".equals(arg) || "--jssc".equals(arg)) {
+                jsscFlag = true;
+                rxtxFlag = true;
+            } else if ("-t".equals(arg) || "--rxtx".equals(arg)) {
+                jsscFlag = false;
+                rxtxFlag = true;
             } else if ("-p".equals(arg) || "--printer".equals(arg)) {
                 printerFlag = true;
             } else if ("-v".equals(arg) || "--verbose".equals(arg)) {
-                verboseFlag = true;
+                logLevel = Level.FINE;
+            } else if ("-vv".equals(arg)) {
+                logLevel = Level.FINER;
+            } else if ("-vvv".equals(arg)) {
+                logLevel = Level.FINEST;
             } else if ("-d".equals(arg) || "--debug".equals(arg)) {
-                debugFlag = true;
+                logLevel = Level.FINEST;
             } else if ("-r".equals(arg) || "--remote".equals(arg)) {
                 remoteFlag = true;
             } else if ("-?".equals(arg) || "-h".equals(arg) || "--help".equals(arg)) {
@@ -61,6 +108,9 @@ public class Main {
                 furtherArgsFlag = true;
             } else if ("install".equals(arg)) {
                 command = "install";
+                furtherArgsFlag = true;
+            } else if ("proxy".equals(arg)) {
+                command = "proxy";
                 furtherArgsFlag = true;
             } else if ("status".equals(arg)) {
                 command = "status";
@@ -93,31 +143,50 @@ public class Main {
                 command = "start";
                 furtherArgsFlag = true;
             } else {
-                System.err.println("Unknown option: '" + arg + "'");
+                logger.warning("Unknown option: '" + arg + "'");
                 printHelp();
                 System.exit(1);
             }
         }
-
-        ResponseFactory.DEBUG = debugFlag;
+        rootLogger.setLevel(logLevel);
+        logger.setLevel(logLevel);
 
         if ("help".equals(command) || command == null) {
             printHelp();
             System.exit(0);
         } else {
-            SerialPortsPrinterDiscovery discovery = new SerialPortsPrinterDiscovery();
-            discovery.setVerbose(verboseFlag);
-            discovery.setDebug(debugFlag);
+            BasePrinterDiscovery localDiscovery;
+            if (jsscFlag) {
+                localDiscovery = new JSSCPrinterDiscovery();
+            } else if (rxtxFlag) {
+                localDiscovery = new RxTxPrinterDiscovery();
+            } else {
+                localDiscovery = new JSSCPrinterDiscovery();
+            }
+
+            PrinterDiscovery discovery;
+            if (remoteFlag) {
+                BasePrinterDiscovery remoteDiscovery = new RemotePrinterDiscovery();
+
+                discovery = new AggregatedPrinterDiscovery(localDiscovery, remoteDiscovery);
+            } else {
+                discovery = localDiscovery;
+            }
 
             List<Printer> printers = null;
-            if (!"upload".equals(command) && !"web".equals(command)) {
-                printers = discovery.findAllPrinters(remoteFlag);
+            if (!"upload".equals(command)
+                    && !"install".equals(command)
+                    && !"proxy".equals(command)
+                    && !"web".equals(command)) {
+                printers = discovery.findAllPrinters();
             }
 
             if ("list".equals(command)) {
                 ListCommand.execute(printers);
             } else if ("install".equals(command)) {
                 InstallCommand.execute(furtherArgs);
+            } else if ("proxy".equals(command)) {
+                ProxyCommand.execute(localDiscovery, furtherArgs);
             } else if ("upload".equals(command)) {
                 UploadCommand.execute(furtherArgs);
             } else if ("web".equals(command)) {
@@ -131,17 +200,17 @@ public class Main {
                     if (printers.size() == 1) {
                         selectedPrinter = printers.get(0);
                     } else if (printers.size() == 0 && !helpInvocation) {
-                        System.err.println("There are no detected printers.");
+                        logger.severe("There are no detected printers.");
                         System.exit(1);
                     } else if (!helpInvocation) {
-                        System.err.println("There are more detected printers:");
+                        logger.severe("There are more detected printers:");
                         int i = 1;
                         for (Printer printer : printers) {
                             printer.close();
-                            System.err.println("    " + i + ":" + printer.getPrinterName());
+                            logger.severe("    " + i + ":" + printer.getPrinterName());
                             i++;
                         }
-                        System.err.println("This tool currently doesn't support multiple printers.");
+                        logger.severe("This tool currently doesn't support multiple printers.");
                         System.exit(1);
                     }
                 } else {
@@ -155,7 +224,7 @@ public class Main {
                         }
                     }
                     if (selectedPrinter == null) {
-                        System.err.println("No printer with id or path '" + printerId + "' detected. Try list command.");
+                        logger.severe("No printer with id or path '" + printerId + "' detected. Try list command.");
                         System.exit(1);
                     }
                 }
@@ -188,47 +257,47 @@ public class Main {
     }
 
     public static void printGeneralOptions() {
-        System.out.println("  General options are one of these:");
-        System.out.println("  -v | --verbose   - increases voutput erbosity level");
-        System.out.println("  -d | --debug     - increases debug level");
-        System.out.println("  -r | --remote    - include remote printers in discovery");
-        System.out.println("  -p | --printer   - if more than one printer is connected to your");
-        System.out.println("                     computer you must select which one command is");
-        System.out.println("                     going to be applied on. You can get list of");
-        System.out.println("                     available printers using 'list' command");
+        logger.info("  General options are one of these:");
+        logger.info("  -v | --verbose   - increases voutput erbosity level");
+        logger.info("  -d | --debug     - increases debug level");
+        logger.info("  -r | --remote    - include remote printers in discovery");
+        logger.info("  -p | --printer   - if more than one printer is connected to your");
+        logger.info("                     computer you must select which one command is");
+        logger.info("                     going to be applied on. You can get list of");
+        logger.info("                     available printers using 'list' command");
     }
 
     public static void printSpecificOptions() {
-        System.out.println("  Specific options are:");
-        System.out.println("");
-        System.out.println("  -h | --help | -?     - this page");
+        logger.info("  Specific options are:");
+        logger.info("");
+        logger.info("  -h | --help | -?     - this page");
     }
 
     public static void printHelp() {
-        System.out.println("Usage: rbx [<general-options>] <command> [<specific-options>]");
-        System.out.println("");
-        System.out.println("  General options are one of these:");
-        System.out.println("  -h | --help | -? - this page");
+        logger.info("Usage: rbx [<general-options>] <command> [<specific-options>]");
+        logger.info("");
+        logger.info("  General options are one of these:");
+        logger.info("  -h | --help | -? - this page");
         printGeneralOptions();
-        System.out.println("");
-        System.out.println("  Supported commands are:");
-        System.out.println("");
-        System.out.println("  install  - installs in local (linux) system");
-        System.out.println("  list     - lists attached printers");
-        System.out.println("  status   - displays printer's status");
-        System.out.println("  pause    - pauses current print if there's one");
-        System.out.println("  resume   - resumes current print if there's one");
-        System.out.println("  abort    - aborts current print if there's one");
-        System.out.println("  upload   - sets print file for status command");
-        System.out.println("  gcode    - sends gcode command to the printer");
-        System.out.println("  send     - creates a print job and send gcode (file) it to the printer");
-        System.out.println("  start    - starts print job that is already in the printer");
-        System.out.println("  jobs     - lists jobs stored on ther printer");
-        System.out.println("");
-        System.out.println("  Tip: further help can be obtained if '-h'/'-?'/'--help; is specified");
-        System.out.println("  after commmand. Example: ");
-        System.out.println("");
-        System.out.println("  rbx status --help");
+        logger.info("");
+        logger.info("  Supported commands are:");
+        logger.info("");
+        logger.info("  install  - installs in local (linux) system");
+        logger.info("  list     - lists attached printers");
+        logger.info("  status   - displays printer's status");
+        logger.info("  pause    - pauses current print if there's one");
+        logger.info("  resume   - resumes current print if there's one");
+        logger.info("  abort    - aborts current print if there's one");
+        logger.info("  upload   - sets print file for status command");
+        logger.info("  gcode    - sends gcode command to the printer");
+        logger.info("  send     - creates a print job and send gcode (file) it to the printer");
+        logger.info("  start    - starts print job that is already in the printer");
+        logger.info("  jobs     - lists jobs stored on ther printer");
+        logger.info("");
+        logger.info("  Tip: further help can be obtained if '-h'/'-?'/'--help; is specified");
+        logger.info("  after commmand. Example: ");
+        logger.info("");
+        logger.info("  rbx status --help");
     }
 
     /**
@@ -239,10 +308,54 @@ public class Main {
     public static boolean processStandardResponse(Printer printer, StandardResponse response) throws IOException {
         String hrs = StandardResponseHelper.processStandardResponse(printer, response);
         if (hrs != null) {
-            System.err.println(hrs);
+            logger.warning(hrs);
         }
         return hrs == null;
     }
 
+    private static class LocalFormatter extends Formatter {
+        private final Date dat = new Date();
 
+        @Override
+        public synchronized String format(LogRecord record) {
+            dat.setTime(record.getMillis());
+            String source;
+            if (record.getSourceClassName() != null) {
+                source = record.getSourceClassName();
+                if (record.getSourceMethodName() != null) {
+                   source += " " + record.getSourceMethodName();
+                }
+            } else {
+                source = record.getLoggerName();
+            }
+            String message = formatMessage(record);
+            String throwable = "";
+            if (record.getThrown() != null) {
+                StringWriter sw = new StringWriter();
+                PrintWriter pw = new PrintWriter(sw);
+                pw.println();
+                record.getThrown().printStackTrace(pw);
+                pw.close();
+                throwable = sw.toString();
+            }
+
+            if (record.getLevel().intValue() < Level.FINE.intValue()) {
+                return String.format("%1$tY-%1$tm-%1$td %1$tH:%1$tM:%1$tS %4$6s %2$s %5$s%6$s%n",
+                        dat,
+                        source,
+                        record.getLoggerName(),
+                        record.getLevel(),
+                        message,
+                        throwable);
+            } else {
+                return String.format("%5$s%6$s%n",
+                        dat,
+                        source,
+                        record.getLoggerName(),
+                        record.getLevel(),
+                        message,
+                        throwable);
+            }
+        }
+    }
 }

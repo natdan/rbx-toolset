@@ -13,6 +13,7 @@
 package org.ah.robox;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 import org.ah.robox.comms.Printer;
 import org.ah.robox.comms.response.StandardResponse;
@@ -23,6 +24,7 @@ import org.ah.robox.comms.response.StandardResponse;
  * @author Daniel Sendula
  */
 public class AbortPrintCommand {
+    private static final Logger logger = Logger.getLogger(AbortPrintCommand.class.getName());
 
     public static final String[] FINISH_PRINT_GCODE = new String[]{
         "M103 S0", // Nozzle heater off
@@ -55,7 +57,7 @@ public class AbortPrintCommand {
                 printHelp();
                 System.exit(0);
             } else {
-                System.err.println("Unknown option: '" + a + "'");
+                logger.severe("Unknown option: '" + a + "'");
                 printHelp();
                 System.exit(1);
             }
@@ -69,10 +71,10 @@ public class AbortPrintCommand {
     }
 
     public static void printHelp() {
-        System.out.println("Usage: rbx [<general-options>] abort [<specific-options>]");
-        System.out.println("");
+        logger.info("Usage: rbx [<general-options>] abort [<specific-options>]");
+        logger.info("");
         Main.printGeneralOptions();
-        System.out.println("");
+        logger.info("");
         Main.printSpecificOptions();
     }
 }

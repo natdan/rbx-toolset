@@ -13,6 +13,7 @@
 package org.ah.robox;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 import org.ah.robox.comms.Printer;
 
@@ -22,15 +23,16 @@ import org.ah.robox.comms.Printer;
  * @author Daniel Sendula
  */
 public class ListCommand {
+    private static final Logger logger = Logger.getLogger(ListCommand.class.getName());
 
     public static void execute(List<Printer> printers) {
         if (printers.size() == 0) {
-            System.out.println("There are not detected printers.");
+            logger.info("There are not detected printers.");
         } else {
-            System.out.println("Detected printers:");
+            logger.info("Detected printers:");
             int i = 1;
             for (Printer printer : printers) {
-                System.out.println("    " + i + ":" + printer.getPrinterName() + " @ " + printer.getPrinterChannel().getPrinterPath());
+                logger.info("    " + i + ":" + printer.getPrinterName() + " @ " + printer.getPrinterChannel().getPrinterPath());
                 printer.close();
                 i++;
             }

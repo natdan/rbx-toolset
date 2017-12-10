@@ -18,12 +18,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.ah.robox.ExtendedPrinterStatus;
 import org.ah.robox.Main;
 import org.ah.robox.OverallPrinterStatus;
 import org.ah.robox.PrintStatusCommand;
 import org.ah.robox.PrintStatusCommand.Estimate;
+import org.ah.robox.SendPrintJobCommand;
 import org.ah.robox.comms.Printer;
 import org.ah.robox.comms.PrinterDiscovery;
 import org.ah.robox.comms.response.PrinterStatusResponse;
@@ -34,6 +37,8 @@ import org.ah.robox.comms.response.PrinterStatusResponse;
  * @author Daniel Sendula
  */
 public class StatusManager implements Runnable {
+
+    private static final Logger logger = Logger.getLogger(SendPrintJobCommand.class.getName());
 
     private String preferredPrinterId;
     private long lastInvoked;
@@ -63,13 +68,12 @@ public class StatusManager implements Runnable {
         run = false;
     }
 
+    @Override
     public void run() {
         try {
-            if (Main.debugFlag) {
-                System.out.println("Starting printer status checking thread");
-            }
-            if (Main.verboseFlag && postRefreshCommand != null) {
-                System.out.println("Post refresh command set to: " + postRefreshCommand);
+            logger.finer("Starting printer status checking thread");
+            if (postRefreshCommand != null) {
+                logger.fine("Post refresh command set to: " + postRefreshCommand);
             }
             while (run) {
                 try {
@@ -95,9 +99,7 @@ public class StatusManager implements Runnable {
                                             && extendedPrinterStatus.getPrinterStatus().getPrintJob().length() > 0) {
 
                                         String printJob = extendedPrinterStatus.getPrinterStatus().getPrintJob();
-                                        if (Main.verboseFlag) {
-                                            System.out.println("Got print job: " + printJob);
-                                        }
+                                        logger.fine("Got print job: " + printJob);
                                         try {
                                             Estimate estimateTime = PrintStatusCommand.calculateEstimate(printJob, extendedPrinterStatus.getPrinterStatus().getLineNumber(), System.currentTimeMillis());
                                             extendedPrinterStatus.setEstimate(estimateTime);
@@ -110,9 +112,7 @@ public class StatusManager implements Runnable {
                                             param = emptyTime.replace("%c", "ERROR:IOException"  + e.getMessage());
                                         }
                                     } else {
-                                        if (Main.verboseFlag) {
-                                            System.out.println("No print job.");
-                                        }
+                                        logger.fine("No print job.");
                                         String emptyTime = format.replace("%h", "").replace("%m", "").replace("%s", "");
                                         param = emptyTime.replace("%c", "Idle");
                                     }
@@ -122,9 +122,7 @@ public class StatusManager implements Runnable {
                                     }
                                 }
                             } catch (IOException e) {
-                                if (Main.debugFlag) {
-                                    System.err.println("Failed to obtain printer status: " + e.getMessage());
-                                }
+                                logger.log(Level.FINER, "Failed to obtain printer status: ", e);
                                 printer = null;
                             }
                         }
@@ -138,18 +136,14 @@ public class StatusManager implements Runnable {
                     }
 
                     if (run) {
-                        if (Main.debugFlag) {
-                            System.out.println("Printer status waiting for " + (interval * 1000));
-                        }
+                        logger.finer("Printer status waiting for " + (interval * 1000));
                         Thread.sleep(interval * 1000);
                         lastInvoked = System.currentTimeMillis();
                     }
                 } catch (InterruptedException e) {
                 }
             }
-            if (Main.debugFlag) {
-                System.out.println("Leaving printer status checking thread");
-            }
+            logger.finer("Leaving printer status checking thread");
         } catch (Throwable t) {
             t.printStackTrace(System.err);
             System.exit(1);
@@ -205,7 +199,7 @@ public class StatusManager implements Runnable {
     }
 
     private void updatePrinters() throws IOException {
-        List<Printer> allPrinters = printerDiscovery.findAllPrinters(false);
+        List<Printer> allPrinters = printerDiscovery.findAllPrinters();
         for (Printer printer : allPrinters) {
             String printerId = printer.getPrinterId();
             Printer existingPrinter = printers.get(printerId);
@@ -217,22 +211,20 @@ public class StatusManager implements Runnable {
 
     private void invokeCommand(ExtendedPrinterStatus printStatus) {
         String command = postRefreshCommand + " " + param + "";
-        if (Main.debugFlag) {
-            System.out.println("Invoking command for printer status '" + command + "'");
-        }
+        logger.finer("Invoking command for printer status '" + command + "'");
         try {
             Process process = Runtime.getRuntime().exec(command);
-            if (Main.debugFlag) {
+            if (Main.logLevel.intValue() <= Level.FINER.intValue()) {
                 try {
                     byte[] buffer = new byte[1024];
                     int r = process.getErrorStream().read(buffer);
                     while (r > 0) {
-                        System.err.print(new String(buffer, 0, r));
+                        logger.warning(new String(buffer, 0, r));
                         r = process.getErrorStream().read(buffer);
                     }
                     r = process.getInputStream().read(buffer);
                     while (r > 0) {
-                        System.err.print(new String(buffer, 0, r));
+                        logger.warning(new String(buffer, 0, r));
                         r = process.getInputStream().read(buffer);
                     }
                 } catch (IOException e) {
@@ -240,10 +232,10 @@ public class StatusManager implements Runnable {
                 }
             }
         } catch (Throwable t) {
-            if (Main.debugFlag) {
-                t.printStackTrace(System.err);
-            } else if (Main.verboseFlag) {
-                System.err.print(t.getMessage());
+            if (Main.logLevel.intValue() <= Level.FINER.intValue()) {
+                logger.log(Level.FINER, "", t);
+            } else {
+                logger.fine(t.getMessage());
             }
         }
     }

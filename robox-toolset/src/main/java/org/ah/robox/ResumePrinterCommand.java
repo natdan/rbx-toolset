@@ -13,6 +13,7 @@
 package org.ah.robox;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 import org.ah.robox.comms.Printer;
 import org.ah.robox.comms.response.StandardResponse;
@@ -23,6 +24,7 @@ import org.ah.robox.comms.response.StandardResponse;
  * @author Daniel Sendula
  */
 public class ResumePrinterCommand {
+    private static final Logger logger = Logger.getLogger(ResumePrinterCommand.class.getName());
 
     public static void execute(Printer printer, List<String> args) throws Exception {
         for (String a : args) {
@@ -30,7 +32,7 @@ public class ResumePrinterCommand {
                 printHelp();
                 System.exit(0);
             } else {
-                System.err.println("Unknown option: '" + a + "'");
+                logger.severe("Unknown option: '" + a + "'");
                 printHelp();
                 System.exit(1);
             }
@@ -41,10 +43,10 @@ public class ResumePrinterCommand {
     }
 
     public static void printHelp() {
-        System.out.println("Usage: rbx [<general-options>] resume [<specific-options>]");
-        System.out.println("");
+        logger.info("Usage: rbx [<general-options>] resume [<specific-options>]");
+        logger.info("");
         Main.printGeneralOptions();
-        System.out.println("");
+        logger.info("");
         Main.printSpecificOptions();
     }
 }
