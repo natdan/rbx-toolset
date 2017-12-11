@@ -115,6 +115,9 @@ public class Main {
             } else if ("status".equals(arg)) {
                 command = "status";
                 furtherArgsFlag = true;
+            } else if ("readreel".equals(arg)) {
+                command = "readreel";
+                furtherArgsFlag = true;
             } else if ("upload".equals(arg)) {
                 command = "upload";
                 furtherArgsFlag = true;
@@ -232,6 +235,8 @@ public class Main {
                 try {
                     if ("status".equals(command)) {
                         PrintStatusCommand.execute(selectedPrinter, furtherArgs);
+                    } else if ("readreel".equals(command)) {
+                        ReadReelCommand.execute(selectedPrinter, furtherArgs);
                     } else if ("pause".equals(command)) {
                         PausePrinterCommand.execute(selectedPrinter, furtherArgs);
                     } else if ("resume".equals(command)) {

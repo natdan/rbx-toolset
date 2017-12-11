@@ -21,6 +21,7 @@ import org.ah.robox.comms.response.GCodeResponse;
 import org.ah.robox.comms.response.PrintJobsResponse;
 import org.ah.robox.comms.response.PrinterDetailsResponse;
 import org.ah.robox.comms.response.PrinterStatusResponse;
+import org.ah.robox.comms.response.ReelEEPROMResponse;
 import org.ah.robox.comms.response.Response;
 import org.ah.robox.comms.response.ResponseFactory;
 import org.ah.robox.comms.response.StandardResponse;
@@ -230,6 +231,17 @@ public class RoboxPrinter implements Printer {
         standardResponse = (StandardResponse)response;
 
         return standardResponse;
+    }
+
+    @Override
+    public ReelEEPROMResponse getReadReel(int reelNo) throws IOException {
+        printerRequestFactory.sendReadReel(reelNo);
+        Response response = printerResponseFactory.readResponse();
+        if (response instanceof ReelEEPROMResponse) {
+            return (ReelEEPROMResponse)response;
+        }
+
+        throw new UnexpectedPrinterResponse(response);
     }
 
     @Override

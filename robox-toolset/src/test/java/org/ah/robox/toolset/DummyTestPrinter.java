@@ -22,6 +22,7 @@ import org.ah.robox.comms.response.GCodeResponse;
 import org.ah.robox.comms.response.PrintJobsResponse;
 import org.ah.robox.comms.response.PrinterPause;
 import org.ah.robox.comms.response.PrinterStatusResponse;
+import org.ah.robox.comms.response.ReelEEPROMResponse;
 import org.ah.robox.comms.response.StandardResponse;
 
 /**
@@ -57,31 +58,38 @@ public class DummyTestPrinter implements Printer {
         printerStatusResponse.setFeedRateMultiplier("0.9");
     }
 
+    @Override
     public void close() {
     }
 
+    @Override
     public String getPrinterId() {
         return printerId;
     }
 
+    @Override
     public PrinterChannel getPrinterChannel() {
         return printerChannel;
     }
 
+    @Override
     public PrinterStatusResponse getPrinterStatus() throws IOException {
         return printerStatusResponse;
     }
 
+    @Override
     public StandardResponse pausePrinter() throws IOException {
         System.out.println("Issued PAUSE command");
         return standardResponse;
     }
 
+    @Override
     public StandardResponse resumePrinter() throws IOException {
         System.out.println("Issued RESUME command");
         return standardResponse;
     }
 
+    @Override
     public StandardResponse abortPrint() throws IOException {
         System.out.println("Issued ABORT PRINT command");
         return standardResponse;
@@ -103,39 +111,54 @@ public class DummyTestPrinter implements Printer {
         this.standardResponse = standardResponse;
     }
 
+    @Override
     public String getPrinterName() {
         return printerId;
     }
 
+    @Override
     public String getModel() {
         return model;
     }
 
+    @Override
     public String getSerialNumber() {
         return serialNumber;
     }
 
+    @Override
     public GCodeResponse sendGCode(String gcode) throws IOException {
         return null;
     }
 
+    @Override
     public StandardResponse reportErrors() throws IOException {
         return null;
     }
 
+    @Override
     public StandardResponse resetErrors() throws IOException {
         return null;
     }
 
+    @Override
     public StandardResponse startPrint(String printJob) throws IOException {
         return null;
     }
 
+    @Override
     public PrintJobsResponse getPrintJobs() throws IOException {
         return null;
     }
 
+    @Override
     public StandardResponse transmitPrintJob(String printJobId, Reader gcode, TransmitCallback callback) throws IOException {
+        return null;
+    }
+
+    @Override
+    public ReelEEPROMResponse getReadReel(int parseInt) throws IOException {
+        // TODO Auto-generated method stub
         return null;
     }
 }

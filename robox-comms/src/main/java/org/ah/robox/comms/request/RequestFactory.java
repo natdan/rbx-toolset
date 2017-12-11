@@ -34,6 +34,8 @@ public class RequestFactory {
     public static int SEND_GCODE = 0x95;
     public static int GET_PRINT_JOBS = 0x96;
     public static int PRINTER_PAUSE_RESUME_COMMAND = 0x98;
+    public static int READ_REEL_EEPROM0 = 0xA3;
+    public static int READ_REEL_EEPROM1 = 0xA5;
     public static int PRINTER_STATUS_REQ_COMMAND = 0xb0;
     public static int GET_PRINTER_DETAILS = 0xb2;
     public static int REPORT_ERRORS = 0xb3;
@@ -160,5 +162,15 @@ public class RequestFactory {
         out.flush();
         logger.finer("Transmitted packet:");
         PrintHex.printHex(logger, Level.FINER, buffer);
+    }
+
+    public void sendReadReel(int reelNo) throws IOException {
+        byte[] buffer = new byte[1];
+        if (reelNo == 0) {
+            buffer[0] = (byte)READ_REEL_EEPROM0;
+        } else {
+            buffer[0] = (byte)READ_REEL_EEPROM1;
+        }
+        sendBuffer(buffer);
     }
 }

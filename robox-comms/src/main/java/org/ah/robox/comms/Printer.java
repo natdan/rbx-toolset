@@ -18,6 +18,7 @@ import java.io.Reader;
 import org.ah.robox.comms.response.GCodeResponse;
 import org.ah.robox.comms.response.PrintJobsResponse;
 import org.ah.robox.comms.response.PrinterStatusResponse;
+import org.ah.robox.comms.response.ReelEEPROMResponse;
 import org.ah.robox.comms.response.StandardResponse;
 
 /**
@@ -57,4 +58,6 @@ public interface Printer {
     PrintJobsResponse getPrintJobs() throws IOException;
 
     StandardResponse transmitPrintJob(String printJobId, Reader gcodeReader, TransmitCallback callback) throws IOException;
+
+    ReelEEPROMResponse getReadReel(int parseInt) throws IOException;
 }

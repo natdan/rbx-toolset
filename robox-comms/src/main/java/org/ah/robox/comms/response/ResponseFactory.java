@@ -33,7 +33,9 @@ public class ResponseFactory {
     public static final int PRINTER_STATUS_RESPONSE = 0xe1;
     public static final int STANDARD_RESPONSE = 0xe3;
     public static final int PRINTER_DETAILS_RESPONSE = 0xe5;
+    public static final int REEL_EEPROM0_RESPONSE = 0xe6;
     public static final int GCODE_RESPONSE = 0xe7;
+    public static final int REEL_EEPROM1_RESPONSE = 0xe8;
 
     private InputStream in;
     private byte[] buffer;
@@ -192,6 +194,32 @@ public class ResponseFactory {
                 printJob = TRIM_STRING_CONVERTER.convert(printJob);
                 printJobsResponse.getPrintJobs().add(printJob);
             }
+        } else if (r == REEL_EEPROM0_RESPONSE || r == REEL_EEPROM1_RESPONSE) {
+
+            ReelEEPROMResponse reelEEPROMResponse = new ReelEEPROMResponse();
+            if (r == REEL_EEPROM0_RESPONSE) {
+                reelEEPROMResponse.setEEPROM(0);
+            } else {
+                reelEEPROMResponse.setEEPROM(1);
+            }
+            ptr = 0;
+            response = reelEEPROMResponse;
+            buffer = new byte[192];
+            readBuffer(in, buffer);
+
+            extractString("id", 16, TRIM_STRING_CONVERTER);
+            extractString("colour", 6, TRIM_STRING_CONVERTER);
+            skip(18);
+            extractString("firstLayerNozzleTemperature", 8, TRIM_STRING_CONVERTER);
+            extractString("nozzleTemperature", 8, TRIM_STRING_CONVERTER);
+            extractString("firstLayerBedTemperature", 8, TRIM_STRING_CONVERTER);
+            extractString("bedTemperature", 8, TRIM_STRING_CONVERTER);
+            extractString("ambientTemperature", 8, TRIM_STRING_CONVERTER);
+            extractString("filamentSize", 8, TRIM_STRING_CONVERTER);
+            extractString("multiplier", 8, TRIM_STRING_CONVERTER);
+            extractString("feedRate", 8, TRIM_STRING_CONVERTER);
+            extractString("name", 40, TRIM_STRING_CONVERTER);
+            extractString("type", 1, TRIM_STRING_CONVERTER);
 
         } else {
             buffer = new byte[in.available()];
