@@ -22,7 +22,7 @@ RETVAL=0
 case "$1" in
   start)
         echo -n "Starting rbx-proxy daemon... "
-        $BINARY proxy -u 2>&1 &
+        $BINARY proxy 2>&1 &
         echo "Done."
         ;;
   stop)

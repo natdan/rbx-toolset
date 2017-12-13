@@ -1,5 +1,6 @@
 package org.ah.robox.proxy;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -84,11 +85,12 @@ public class ProxyCommand {
             logger.severe("Cannot install on any other OS but Linux.");
             System.exit(-1);
         }
+        File rbxProxyFile = new File("/etc/init.d/rbx-proxy");
 
         InputStream is = ProxyCommand.class.getResourceAsStream("/rbx-proxy");
         try {
             try {
-                FileOutputStream fos = new FileOutputStream("/etc/init.d/rbx-proxy");
+                FileOutputStream fos = new FileOutputStream(rbxProxyFile);
                 try {
                     byte[] buf = new byte[50000];
 
@@ -119,16 +121,69 @@ public class ProxyCommand {
                 is.close();
             } catch (IOException ignore) { }
         }
+
+        try {
+            rbxProxyFile.setExecutable(true, false);
+        } catch (SecurityException e) {
+            logger.severe("Failed to set executable permissions to /etc/init.d/rbx-proxy. Try running 'sudo chmod a+x /etc/init.d/rbx-proxy'");
+            System.exit(-1);
+        }
+
+        if (!execute("systemctl", "daemon-reload")) {
+            logger.severe("Failed to run 'systemctl daemon-reload'. Please try running rbx with sudo.");
+            System.exit(-1);
+        }
+        if (!execute("systemctl", "enable", "rbx-proxy")) {
+            logger.severe("Failed to run 'systemctl daemon-reload'. Please try running rbx with sudo.");
+            System.exit(-1);
+        }
         logger.info("Service rbx-proxy successfully installed");
     }
 
     private static void startService() {
+        if (execute("service", "start")) {
+            logger.severe("Failed to run 'service start'. Please try running rbx with sudo.");
+            System.exit(-1);
+        }
+        logger.info("Service rbx-proxy successfully started");
     }
 
     private static void stopService() {
+        if (execute("service", "stop")) {
+            logger.severe("Failed to run 'service stop'. Please try running rbx with sudo.");
+            System.exit(-1);
+        }
+        logger.info("Service rbx-proxy successfully stopped");
     }
 
-    private static boolean execute(String command) {
+    private static boolean execute(String... command) {
+        try {
+            ProcessBuilder pb = new ProcessBuilder(command);
+            Process p = pb.start();
+            InputStream is = p.getInputStream();
+            int a = is.available();
+            while (a > 0 || p.isAlive()) {
+                if (a > 0) {
+                    byte[] buf = new byte[10240];
+
+                    int r = is.read(buf, 0, a);
+                    System.out.write(buf, 0, r);
+                } else {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException ignore) {}
+                }
+                a = is.available();
+            }
+            int exitValue = p.waitFor();
+            if (exitValue != 0) {
+                logger.severe("Got exit code " + exitValue + " while running '" + command + "'");
+                return false;
+            }
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Got exception while running '" + command + "'", e);
+            return false;
+        }
         return true;
     }
 
