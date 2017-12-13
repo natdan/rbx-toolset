@@ -49,7 +49,7 @@ public class RemotePrinterDiscovery extends BasePrinterDiscovery {
             int port = datagramSocket.getLocalPort();
             logger.finest("Local port: " + port + " is bound: " + datagramSocket.isBound());
 
-            byte[] buf = ("DISCOVER_ROVER#255.255.255.255:" + port).getBytes();
+            byte[] buf = ("ROBOX_PROXY_DISCOVER#255.255.255.255:" + port).getBytes();
             DatagramPacket response = new DatagramPacket(buf, buf.length,
                     InetAddress.getByName("255.255.255.255"), 4080);
             datagramSocket.send(response);

@@ -1,18 +1,13 @@
 package org.ah.robox.proxy;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.net.SocketException;
-import java.net.SocketTimeoutException;
-import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -20,18 +15,174 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.ah.robox.Main;
 import org.ah.robox.comms.BasePrinterDiscovery;
 import org.ah.robox.comms.PrinterChannel;
 import org.ah.robox.comms.PrinterDiscovery;
 
 public class ProxyCommand {
 
-    private static Logger logger = Logger.getLogger(ProxyCommand.class.getName());
+    public static final int KILL_TIMEOUT = 4000; // 4sec
+    public static final int KILL_SLEEP = 500; // 1/2 sec
+
+    static Logger logger = Logger.getLogger(ProxyCommand.class.getName());
     private static final Logger discoveryLogger = Logger.getLogger(BasePrinterDiscovery.class.getName());
 
     public static void execute(PrinterDiscovery localDiscovery, List<String> args) throws Exception {
-        ProxyCommand client = new ProxyCommand(localDiscovery);
-        client.start();
+        String command = "run";
+        for (String a : args) {
+            if ("-?".equals(a) || "-h".equals(a) || "--help".equals(a)) {
+                printHelp();
+                System.exit(0);
+            } else if (a.equals("run")) {
+                command = a;
+            } else if (a.equals("install")) {
+                command = a;
+            } else if (a.equals("status")) {
+                command = a;
+            } else if (a.equals("start")) {
+                command = a;
+            } else if (a.equals("stop")) {
+                command = a;
+            } else if (a.equals("kill")) {
+                command = a;
+            } else {
+                logger.severe("Unknown option: '" + a + "'");
+                printHelp();
+                System.exit(1);
+            }
+        }
+
+        if ("run".equals(command)) {
+            ProxyCommand client = new ProxyCommand(localDiscovery);
+            client.start();
+        } else if ("install".equals(command)) {
+            install();
+        } else if ("kill".equals(command)) {
+            kill();
+        } else if ("status".equals(command)) {
+            status();
+        } else if ("start".equals(command)) {
+            startService();
+        } else if ("stop".equals(command)) {
+            stopService();
+        }
+    }
+
+    private static void status() {
+        if (isServiceRunning()) {
+            logger.info("Proxy service is running");
+            System.exit(0);
+        } else {
+            logger.info("No proxy service is running");
+            System.exit(-1);
+        }
+    }
+
+    private static void install() {
+        if (!System.getProperty("os.name").contains("Linux")) {
+            logger.severe("Cannot install on any other OS but Linux.");
+            System.exit(-1);
+        }
+
+        InputStream is = ProxyCommand.class.getResourceAsStream("/rbx-proxy");
+        try {
+            try {
+                FileOutputStream fos = new FileOutputStream("/etc/init.d/rbx-proxy");
+                try {
+                    byte[] buf = new byte[50000];
+
+                    int r = is.read(buf);
+                    fos.write(buf, 0, r);
+
+                } catch (IOException e) {
+                    logger.log(Level.SEVERE, "Failed to create /etc/init.d/rbx-proxy", e);
+                } finally {
+                    try {
+                        fos.close();
+                    } catch (IOException ignore) { }
+                }
+            } catch (FileNotFoundException e) {
+                String msg = e.getMessage();
+                if (msg.endsWith("(Permission denied)")) {
+                    logger.severe("Cannot create file /etc/init.d/rbx-proxy due to permissions.");
+                    logger.severe("Please try running it with sudo:");
+                    logger.severe("");
+                    logger.severe("sudo rbx proxy install");
+                    System.exit(-1);
+                } else {
+                    logger.log(Level.SEVERE, "Failed to create /etc/init.d/rbx-proxy", e);
+                }
+            }
+        } finally {
+            try {
+                is.close();
+            } catch (IOException ignore) { }
+        }
+        logger.info("Service rbx-proxy successfully installed");
+    }
+
+    private static void startService() {
+    }
+
+    private static void stopService() {
+    }
+
+    private static boolean execute(String command) {
+        return true;
+    }
+
+    private static void kill() {
+        if (isServiceRunning()) {
+            try {
+                final DatagramSocket datagramSocket = new DatagramSocket();
+                try {
+                    datagramSocket.setBroadcast(true);
+
+                    byte[] buf = ("ROBOX_PROXY_STOP").getBytes();
+                    DatagramPacket response = new DatagramPacket(buf, buf.length, InetAddress.getByName("127.0.0.1"), 4080);
+
+                    datagramSocket.send(response);
+                } finally {
+                    datagramSocket.close();
+                }
+            } catch (Exception ignore) {}
+
+            long now = System.currentTimeMillis();
+            boolean running = isServiceRunning();
+            while (running && System.currentTimeMillis() - now < KILL_TIMEOUT) {
+                try {
+                    Thread.sleep(KILL_SLEEP);
+                } catch (InterruptedException e) {}
+                running = isServiceRunning();
+            }
+
+            if (running) {
+                logger.info("Failed to stop proxy service");
+                System.exit(-1);
+            } else {
+                logger.info("Proxy service is stopped");
+                System.exit(0);
+            }
+        } else {
+            logger.info("No proxy service is running");
+            System.exit(-1);
+        }
+    }
+
+    private static boolean isServiceRunning() {
+        try {
+            DatagramSocket socket = new DatagramSocket(4080);
+            try {
+            } finally {
+                try {
+                    socket.close();
+                } catch (Exception ignore) {}
+            }
+        } catch (SocketException ignore) {
+            return true;
+        }
+        return false;
     }
 
     private PrinterDiscovery localDiscovery;
@@ -113,293 +264,37 @@ public class ProxyCommand {
         }
     }
 
-    private class PrinterConnection implements Runnable {
-        private ProxyCommand proxy;
-        private ServerSocket serverSocket;
-        private boolean stopped;
-        private PrinterChannel channel;
-        private Thread thread;
-        private InputStream printerIn;
-        private OutputStream printerOut;
-
-        PrinterConnection(ProxyCommand proxy, PrinterChannel channel) throws IOException {
-            this.proxy = proxy;
-            this.channel = channel;
-            serverSocket = new ServerSocket(0);
-            serverSocket.setSoTimeout(500);
-        }
-
-        public void closeConnection() {
-            stopped = true;
-            try {
-                printerIn.close();
-            } catch (Exception ignore) {
-            }
-            try {
-                printerOut.close();
-            } catch (Exception ignore) {
-            }
-            try {
-                channel.close();
-            } catch (Exception ignore) {
-            }
-            proxy.closePrinterConnection(this);
-        }
-
-        public void start() {
-            try {
-                if (!channel.isOpen()) {
-                    channel.open();
-                }
-
-                printerIn = channel.getInputStream();
-                printerOut = channel.getOutputStream();
-            } catch (IOException e) {
-                closeConnection();
-                return;
-            }
-
-            thread = new Thread(this);
-            thread.setDaemon(true);
-            thread.start();
-        }
-
-        public int getLocalPort() {
-            return serverSocket.getLocalPort();
-        }
-
-        @Override
-        public void run() {
-            while (!stopped) {
-                try {
-                    Socket socket = serverSocket.accept();
-                    Client client = new Client(this, socket, printerIn, printerOut);
-                    client.start();
-                } catch (SocketTimeoutException ignore) {
-                } catch (IOException e) {
-                    closeConnection();
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
-    private class Client {
-
-        private PrinterConnection printerConnection;
-        private Thread readerThread;
-        private Thread writerThread;
-        private Socket socket;
-        private InputStream socketIn;
-        private OutputStream socketOut;
-        private InputStream printerIn;
-        private OutputStream printerOut;
-
-        private boolean startWriterThread = true;
-
-        public Client(PrinterConnection printerConnection, Socket socket, InputStream printerIn, OutputStream printerOut) {
-            this.printerConnection = printerConnection;
-            this.socket = socket;
-            this.printerIn = printerIn;
-            this.printerOut = printerOut;
-        }
-
-        public void start() {
-            try {
-                socketIn = socket.getInputStream();
-                socketOut = socket.getOutputStream();
-            } catch (IOException e) {
-                close();
-                return;
-            }
-
-            logger.fine("Opened connection " + socket.getRemoteSocketAddress());
-
-            readerThread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    String socketDesc = socket.toString();
-                    logger.finest("Started read thread for  " + socketDesc);
-                    while (socket != null && !socket.isClosed()) {
-                        try {
-                            int r = socketIn.read();
-
-                            if (r > 0) {
-                                if (startWriterThread) {
-                                    writerThread.start();
-                                    startWriterThread = false;
-                                }
-                                int a = socketIn.available();
-                                logger.finer("<(" + a + ")");
-                                byte[] readBuffer = new byte[a + 1];
-                                readBuffer[0] = (byte) r;
-                                int total = 1;
-                                if (a > 0) {
-                                    int actual = socketIn.read(readBuffer, 1, a);
-                                    total = total + actual;
-                                }
-
-                                try {
-                                    printerOut.write(readBuffer, 0, total);
-                                } catch (IOException e) {
-                                    close();
-                                    printerConnection.closeConnection();
-                                }
-                            } else {
-                                logger.finer("<(EOF)");
-                                close();
-                            }
-                        } catch (IOException e) {
-                            close();
-                        }
-                    }
-                    logger.finest("Closed read thread for  " + socketDesc);
-                }
-            });
-
-            writerThread = new Thread(new Runnable() {
-
-                @Override
-                public void run() {
-                    String socketDesc = socket.toString();
-                    logger.finest("Started write thread for  " + socketDesc);
-                    while (socket != null && !socket.isClosed()) {
-                        try {
-                            int bytes = printerIn.available();
-                            if (bytes > 0) {
-                                logger.finer(">(" + bytes + ")");
-                                byte[] buffer = new byte[bytes];
-
-                                int actual = printerIn.read(buffer, 0, bytes);
-
-                                try {
-                                    socketOut.write(buffer, 0, actual);
-                                } catch (IOException e) {
-                                    close();
-                                }
-                            } else {
-                                try {
-                                    Thread.sleep(100);
-                                } catch (InterruptedException ignore) { }
-                            }
-                        } catch (IOException e) {
-                            close();
-                            printerConnection.closeConnection();
-                        }
-                    }
-                    logger.finest("Closed write thread for  " + socketDesc);
-                }
-            });
-
-            readerThread.start();
-            // writerThread.start();
-        }
-
-        protected synchronized void close() {
-            if (socket != null) {
-                try {
-                    socket.close();
-                    logger.fine("Closing connection " + socket.getRemoteSocketAddress());
-                } catch (Exception ignore) {
-                }
-
-                try {
-                    readerThread.interrupt();
-                } catch (Exception ignore) {
-                }
-                try {
-                    writerThread.interrupt();
-                } catch (Exception ignore) {
-                }
-
-                readerThread = null;
-                writerThread = null;
-
-                socket = null;
-            }
-        }
-    }
-
-    private static class LocalProxyResponder implements Runnable {
-
-        private DatagramSocket datagramSocket;
-        private Map<PrinterChannel, PrinterConnection> discovered = new HashMap<>();
-
-        public LocalProxyResponder(DatagramSocket datagramSocket, Map<PrinterChannel, PrinterConnection> discovered) {
-            this.datagramSocket = datagramSocket;
-            this.discovered = discovered;
-        }
-
-        @Override
-        public void run() {
-            byte[] data = new byte[2048];
-            DatagramPacket packet = new DatagramPacket(data, data.length);
-
-            while (true) {
-                try {
-                    datagramSocket.receive(packet);
-                    String s = new String(data, 0, packet.getLength());
-                    logger.finer("Received datagram: " + s);
-
-                    List<PrinterConnection> currentPrinters = new ArrayList<>();
-                    synchronized (discovered) {
-                        for (PrinterConnection client : discovered.values()) {
-                            currentPrinters.add(client);
-                        }
-                    }
-
-                    if (s.startsWith("DISCOVER_ROVER") && currentPrinters.size() > 0) {
-                        String[] split = s.split("#");
-
-                        Enumeration<NetworkInterface> networkInterfaceEnumerator = NetworkInterface.getNetworkInterfaces();
-                        while (networkInterfaceEnumerator.hasMoreElements()) {
-                            NetworkInterface networkInterface = networkInterfaceEnumerator.nextElement();
-                            Enumeration<InetAddress> inetAddressEnumerator = networkInterface.getInetAddresses();
-                            while (inetAddressEnumerator.hasMoreElements()) {
-                                InetAddress address = inetAddressEnumerator.nextElement();
-                                String hostAddress = address.getHostAddress();
-
-                                logger.finest("Interface on: " + hostAddress + ", lo:" + address.isLoopbackAddress() + ", ll:" + address.isLinkLocalAddress()
-                                        + ", al:" + address.isAnyLocalAddress() + ", sl:" + address.isSiteLocalAddress());
-
-                                if (!address.isLoopbackAddress() && !address.isLinkLocalAddress()) {
-
-                                    for (PrinterConnection connection : currentPrinters) {
-                                        int port = -1;
-                                        synchronized (connection) {
-                                            port = connection.getLocalPort();
-                                        }
-                                        if (port > 0) {
-                                            String printerPath = "serialproxy://" + hostAddress + ":" + port;
-                                            byte[] buf = printerPath.getBytes();
-
-                                            String returnAddress = "255.255.255.255";
-                                            int returnPort = 4080;
-
-                                            if (split.length > 1) {
-                                                String[] split2 = split[1].split(":");
-                                                if (split2.length > 1) {
-                                                    returnAddress = split2[0];
-                                                    try {
-                                                        returnPort = Integer.parseInt(split2[1]);
-                                                    } catch (NumberFormatException ignore) {
-                                                    }
-                                                }
-                                            }
-
-                                            logger.finer("Sending back to " + returnAddress + ":" + returnPort + " : " + printerPath);
-
-                                            DatagramPacket response = new DatagramPacket(buf, buf.length, InetAddress.getByName(returnAddress), returnPort);
-                                            datagramSocket.send(response);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } catch (IOException ignore) {
-                }
-            }
-        }
+    public static void printHelp() {
+        logger.info("Usage: rbx [<general-options>] proxy [<specific-options>] [run|install|status|kill|stop|start]");
+        logger.info("");
+        Main.printGeneralOptions();
+        logger.info("");
+        Main.printSpecificOptions();
+        logger.info("");
+        logger.info("If invoked without any extra command proxy will start proxy server on current machine");
+        logger.info("and expose attached printers through autodiscovery service. In order to invoke any");
+        logger.info("other command on a remote printer (like one with proxy service started) use");
+        logger.info("option -r. See general options.");
+        logger.info("");
+        logger.info("Following extra commands are available, too:");
+        logger.info(" run           - starts proxy in the current shell. Can be omitted.");
+        logger.info(" install       - sets up a linux service in /etc/init.d");
+        logger.info(" status        - checks if proxy is already running on a local computer");
+        logger.info(" kill          - kills currently running proxy. It is not to be used directly");
+        logger.info("                 but by the service to stop the proxy process.");
+        logger.info(" stop          - stops currently running proxy. This command uses linux service.");
+        logger.info(" start         - starts the proxy. This command uses linux service.");
+        logger.info("");
+        logger.info("Note: service can only be installed on linux computer (as started or stopped).");
+        logger.info("Internally commands just invoke 'service start' or 'service stop' commands");
+        logger.info("and, usually, that means that rbx needs to be, then, invoked with sudo.");
+        logger.info("");
+        logger.info("Examples:");
+        logger.info(" rbx proxy               - starts proxy in current shell");
+        logger.info(" rbx -vv proxy           - starts proxy with detailed verbose outout");
+        logger.info(" rbx proxy status        - shows if the proxy is already running on the current computer");
+        logger.info(" sudo rbx proxy install  - creates /etc/init.d/rbx-proxy file and sets it up as a daemon");
+        logger.info(" sudo rbx proxy start    - starts proxy daemon");
+        logger.info(" sudo rbx proxy stop     - stops proxy daemon");
     }
 }

@@ -1,0 +1,49 @@
+#!/bin/sh
+#
+# description: Starts and stops the rbx proxy service daemon
+#
+### BEGIN INIT INFO
+# Provides: rbx-proxy
+# Required-Start: $network $syslog
+# Required-Stop: $network
+# Default-Start: 2 3 5
+# Default-Stop: 0 1 6
+# Short-Description: rbx-proxy service daemon
+# Description: Start or stop the rbx-proxy service daemon
+### END INIT INFO
+
+BINARY=/usr/local/bin/rbx
+test -x $BINARY || { echo "$BINARY not avaible";
+        if [ "$1" = "stop" ]; then exit 0;
+        else exit 5; fi; }
+
+RETVAL=0
+
+case "$1" in
+  start)
+        echo -n "Starting rbx-proxy daemon... "
+        $BINARY proxy -u 2>&1 &
+        echo "Done."
+        ;;
+  stop)
+        echo -n "Shutting down PyROS daemon... "
+        $BINARY proxy kill
+        echo "Done."
+        ;;
+  restart)
+        $0 stop
+        $0 start
+        ;;
+  status)
+        if $BINARY proxy status >/dev/null 2>&1
+        then
+          echo "rbx-proxy is running."
+        else
+          echo "rbx-proxy is not running."
+        fi
+        ;;
+  *)
+        echo $"Usage: $0 {start|stop|restart|status}"
+        exit 1
+esac
+

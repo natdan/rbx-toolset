@@ -29,6 +29,9 @@
   <build>
     <resources>
       <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+      <resource>
         <!-- <targetPath>../packaging</targetPath> -->
         <directory>src/packaging/script</directory>
         <filtering>true</filtering>
