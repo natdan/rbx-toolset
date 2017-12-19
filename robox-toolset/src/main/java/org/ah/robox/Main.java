@@ -301,6 +301,7 @@ public class Main {
         logger.info("  send     - creates a print job and send gcode (file) it to the printer");
         logger.info("  start    - starts print job that is already in the printer");
         logger.info("  jobs     - lists jobs stored on ther printer");
+        logger.info("  proxy    - sets up serial proxy for the printer");
         logger.info("");
         logger.info("  Tip: further help can be obtained if '-h'/'-?'/'--help; is specified");
         logger.info("  after commmand. Example: ");
