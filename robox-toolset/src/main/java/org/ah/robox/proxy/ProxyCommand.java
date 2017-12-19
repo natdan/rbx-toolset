@@ -1,5 +1,8 @@
 package org.ah.robox.proxy;
 
+import static org.ah.robox.comms.LocalProxyPrinterDiscovery.LOCAL_PROXY_DEFAULT_PORT;
+import static org.ah.robox.comms.LocalProxyPrinterDiscovery.isLocalProxyRunning;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -71,7 +74,7 @@ public class ProxyCommand {
     }
 
     private static void status() {
-        if (isServiceRunning()) {
+        if (isLocalProxyRunning()) {
             logger.info("Proxy service is running");
             System.exit(0);
         } else {
@@ -188,14 +191,14 @@ public class ProxyCommand {
     }
 
     private static void kill() {
-        if (isServiceRunning()) {
+        if (isLocalProxyRunning()) {
             try {
                 final DatagramSocket datagramSocket = new DatagramSocket();
                 try {
                     datagramSocket.setBroadcast(true);
 
                     byte[] buf = ("ROBOX_PROXY_STOP").getBytes();
-                    DatagramPacket response = new DatagramPacket(buf, buf.length, InetAddress.getByName("127.0.0.1"), 4080);
+                    DatagramPacket response = new DatagramPacket(buf, buf.length, InetAddress.getByName("127.0.0.1"), LOCAL_PROXY_DEFAULT_PORT);
 
                     datagramSocket.send(response);
                 } finally {
@@ -204,12 +207,12 @@ public class ProxyCommand {
             } catch (Exception ignore) {}
 
             long now = System.currentTimeMillis();
-            boolean running = isServiceRunning();
+            boolean running = isLocalProxyRunning();
             while (running && System.currentTimeMillis() - now < KILL_TIMEOUT) {
                 try {
                     Thread.sleep(KILL_SLEEP);
                 } catch (InterruptedException e) {}
-                running = isServiceRunning();
+                running = isLocalProxyRunning();
             }
 
             if (running) {
@@ -225,21 +228,6 @@ public class ProxyCommand {
         }
     }
 
-    private static boolean isServiceRunning() {
-        try {
-            DatagramSocket socket = new DatagramSocket(4080);
-            try {
-            } finally {
-                try {
-                    socket.close();
-                } catch (Exception ignore) {}
-            }
-        } catch (SocketException ignore) {
-            return true;
-        }
-        return false;
-    }
-
     private PrinterDiscovery localDiscovery;
     private Map<PrinterChannel, PrinterConnection> discovered = new HashMap<>();
     private boolean run = true;
@@ -250,14 +238,14 @@ public class ProxyCommand {
 
     public void start() {
         try {
-            final DatagramSocket datagramSocket = new DatagramSocket(4080);
+            final DatagramSocket datagramSocket = new DatagramSocket(LOCAL_PROXY_DEFAULT_PORT);
             datagramSocket.setBroadcast(true);
 
             Thread thread = new Thread(new LocalProxyResponder(datagramSocket, discovered));
             thread.setDaemon(true);
             thread.start();
         } catch (SocketException e1) {
-            logger.severe("Cannot open UDP socket at 4080");
+            logger.severe("Cannot open UDP socket at " + LOCAL_PROXY_DEFAULT_PORT);
             System.exit(-1);
         }
 

@@ -27,7 +27,7 @@ public class ListCommand {
 
     public static void execute(List<Printer> printers) {
         if (printers.size() == 0) {
-            logger.info("There are not detected printers.");
+            logger.info("There are no printers detected.");
         } else {
             logger.info("Detected printers:");
             int i = 1;

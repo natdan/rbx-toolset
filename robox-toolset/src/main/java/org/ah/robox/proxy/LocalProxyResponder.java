@@ -1,5 +1,7 @@
 package org.ah.robox.proxy;
 
+import static org.ah.robox.comms.LocalProxyPrinterDiscovery.LOCAL_PROXY_DEFAULT_PORT;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -70,7 +72,7 @@ class LocalProxyResponder implements Runnable {
                                         byte[] buf = printerPath.getBytes();
 
                                         String returnAddress = "255.255.255.255";
-                                        int returnPort = 4080;
+                                        int returnPort = LOCAL_PROXY_DEFAULT_PORT;
 
                                         if (split.length > 1) {
                                             String[] split2 = split[1].split(":");

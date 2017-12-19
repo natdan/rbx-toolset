@@ -12,6 +12,8 @@
  *******************************************************************************/
 package org.ah.robox.comms;
 
+import static org.ah.robox.comms.LocalProxyPrinterDiscovery.LOCAL_PROXY_DEFAULT_PORT;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -51,7 +53,7 @@ public class RemotePrinterDiscovery extends BasePrinterDiscovery {
 
             byte[] buf = ("ROBOX_PROXY_DISCOVER#255.255.255.255:" + port).getBytes();
             DatagramPacket response = new DatagramPacket(buf, buf.length,
-                    InetAddress.getByName("255.255.255.255"), 4080);
+                    InetAddress.getByName("255.255.255.255"), LOCAL_PROXY_DEFAULT_PORT);
             datagramSocket.send(response);
 
             datagramSocket.setSoTimeout((SOCKET_TIMEOUT));
@@ -87,6 +89,7 @@ public class RemotePrinterDiscovery extends BasePrinterDiscovery {
                     started = System.currentTimeMillis();
                     currentTimeout = SOCKET_TIMEOUT;
                 } catch (IOException ignore) {
+                    ignore.printStackTrace();
                 }
             }
         } finally {

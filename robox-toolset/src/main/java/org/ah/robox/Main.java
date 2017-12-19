@@ -29,8 +29,10 @@ import java.util.logging.Logger;
 import org.ah.robox.comms.AggregatedPrinterDiscovery;
 import org.ah.robox.comms.BasePrinterDiscovery;
 import org.ah.robox.comms.JSSCPrinterDiscovery;
+import org.ah.robox.comms.LocalProxyPrinterDiscovery;
 import org.ah.robox.comms.Printer;
 import org.ah.robox.comms.PrinterDiscovery;
+import org.ah.robox.comms.PriorityPrinterDiscovery;
 import org.ah.robox.comms.RemotePrinterDiscovery;
 import org.ah.robox.comms.RxTxPrinterDiscovery;
 import org.ah.robox.comms.response.StandardResponse;
@@ -173,7 +175,8 @@ public class Main {
 
                 discovery = new AggregatedPrinterDiscovery(localDiscovery, remoteDiscovery);
             } else {
-                discovery = localDiscovery;
+                LocalProxyPrinterDiscovery localProxyDiscovery = new LocalProxyPrinterDiscovery();
+                discovery = new PriorityPrinterDiscovery(localProxyDiscovery, localDiscovery);
             }
 
             List<Printer> printers = null;

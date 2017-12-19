@@ -77,6 +77,7 @@ class Client {
                 ProxyCommand.logger.finest("Closed read thread for  " + socketDesc);
             }
         });
+        readerThread.setDaemon(true);
 
         writerThread = new Thread(new Runnable() {
 
@@ -111,6 +112,7 @@ class Client {
                 ProxyCommand.logger.finest("Closed write thread for  " + socketDesc);
             }
         });
+        writerThread.setDaemon(true);
 
         readerThread.start();
         // writerThread.start();

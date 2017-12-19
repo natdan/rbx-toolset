@@ -52,6 +52,11 @@ public class InstallCommand {
         byte[] buf = new byte[10240];
 
         File destFile = new File(destDir, destName);
+
+        if (destFile.exists()) {
+            tryToReadVersion(destFile);
+        }
+
         try {
             FileOutputStream fos = new FileOutputStream(destFile);
             try {
@@ -90,5 +95,10 @@ public class InstallCommand {
         }
 
         logger.info("Done. Try 'rbx -h' for more info");
+    }
+
+    private static void tryToReadVersion(File destFile) {
+        // TODO Auto-generated method stub
+
     }
 }

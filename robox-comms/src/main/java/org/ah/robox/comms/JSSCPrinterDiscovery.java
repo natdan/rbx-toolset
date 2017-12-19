@@ -98,7 +98,9 @@ public class JSSCPrinterDiscovery extends BasePrinterDiscovery {
                         logger.finer("Device " + devFile.getAbsolutePath() + " symbolic link is resolved to " + devName);
                     }
 
-                    discoverSerialDevice(printerChannels, devName);
+                    try {
+                        discoverSerialDevice(printerChannels, devName);
+                    } catch (IOException ignore) { }
                 }
             }
         }
