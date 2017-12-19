@@ -124,7 +124,7 @@ public class ResponseFactory {
         } else if (r == STANDARD_RESPONSE) {
             StandardResponse response = new StandardResponse();
             this.response = response;
-            buffer = new byte[32];
+            buffer = new byte[64]; // was 32
             ptr = 0;
             readBuffer(in, buffer);
 
