@@ -74,6 +74,6 @@ public abstract class BasePrinterDiscovery implements PrinterDiscovery {
 
     @Override
     public boolean hasChannel(PrinterChannel printerChannel) {
-        return channels.containsKey(printerChannel);
+        return channels.containsKey(printerChannel.getPrinterPath());
     }
 }
