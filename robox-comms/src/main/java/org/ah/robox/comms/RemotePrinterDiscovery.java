@@ -89,7 +89,6 @@ public class RemotePrinterDiscovery extends BasePrinterDiscovery {
                     started = System.currentTimeMillis();
                     currentTimeout = SOCKET_TIMEOUT;
                 } catch (IOException ignore) {
-                    ignore.printStackTrace();
                 }
             }
         } finally {
