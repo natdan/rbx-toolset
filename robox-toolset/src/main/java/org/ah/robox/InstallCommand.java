@@ -28,8 +28,7 @@ public class InstallCommand {
         if (version == null) { version = "NOT_DETECTED"; }
         if (timestamp == null) { timestamp = "NOT_DETECTED"; }
 
-        logger.info("Detected version: " + version + " and timestamp " + timestamp);
-        logger.info("");
+        logger.info("Installing version:   " + version + " and timestamp " + timestamp);
 
         File thisPath = new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
 
@@ -56,6 +55,7 @@ public class InstallCommand {
         if (destFile.exists()) {
             tryToReadVersion(destFile);
         }
+        logger.info("");
 
         try {
             FileOutputStream fos = new FileOutputStream(destFile);
@@ -98,7 +98,31 @@ public class InstallCommand {
     }
 
     private static void tryToReadVersion(File destFile) {
-        // TODO Auto-generated method stub
+        try {
+            FileInputStream fis = new FileInputStream(destFile);
+            try {
+                byte[] inputBuffer = new byte[10240];
+                int r = fis.read(inputBuffer);
+                if (r >= 120) {
+                    String s = new String(inputBuffer, 0, 120);
+                    String[] lines = s.split("\n");
+                    String version = "";
+                    String timestamp = "";
+                    for (String line : lines) {
+                        if (line.startsWith("export RBX_VERSION=")) {
+                            version = line.substring("export RBX_VERSION=".length());
+                        } else if (line.startsWith("export RBX_TIMESTAMP=")) {
+                            timestamp = line.substring("export RBX_TIMESTAMP=".length());
+                        }
+                    }
 
+                    if (!"".equals(version)) {
+                        logger.info("Detected old version: " + version + " and timestamp " + timestamp);
+                    }
+                }
+            } finally {
+                fis.close();
+            }
+        } catch (IOException ignore) { }
     }
 }
