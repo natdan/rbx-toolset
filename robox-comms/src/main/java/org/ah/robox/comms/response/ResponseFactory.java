@@ -68,8 +68,8 @@ public class ResponseFactory {
             ptr = 0;
             readBuffer(in, buffer);
 
-            extractString("printJob", 16, TRIM_STRING_CONVERTER);
-            extractString("lineNumber", 8, HEX_STRING_TO_INTEGER_CONVERTER);
+            extractString("printJob", 16, TRIM_STRING_CONVERTER, false);
+            extractString("lineNumber", 8, HEX_STRING_TO_INTEGER_CONVERTER, false);
             extractString("pause", 1, STRING_TO_PRINTER_PAUSE_CONVERTER);
             extractByte("busy", BYTE_TO_BOOLEAN_CONVERTER);
 
@@ -246,14 +246,24 @@ public class ResponseFactory {
     }
 
     protected void extractString(String propertyName, int size) {
-        extractString(propertyName, size, NULL_STRING_CONVERTER);
+        extractString(propertyName, size, true);
+    }
+
+    protected void extractString(String propertyName, int size, boolean decode) {
+        extractString(propertyName, size, NULL_STRING_CONVERTER, decode);
     }
 
     protected void extractString(String propertyName, int size, Converter<String, ?> converter) {
+        extractString(propertyName, size, converter, true);
+    }
+
+    protected void extractString(String propertyName, int size, Converter<String, ?> converter, boolean decode) {
         try {
             String str = new String(buffer, ptr, size, "US-ASCII").trim();
 
-            str = decode(str);
+            if (decode) {
+                str = decode(str);
+            }
 
             str = str.replace(Character.valueOf((char)127).toString(), "");
             ptr = ptr + size;

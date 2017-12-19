@@ -18,8 +18,10 @@ package org.ah.robox.comms.response;
 */
 public enum PrinterPause {
 
+    WORKING(-3, "Printing"),
+    IDLE(-2, "Idle"),
     UNKNOWN(-1, "Unknown"),
-    NOT_PAUSED(0, "Working"),
+    NOT_PAUSED(0, ""),
     PAUSING(1, "Pausing"),
     PAUSED(2, "Paused"),
     RESUMING(3, "Resuming");

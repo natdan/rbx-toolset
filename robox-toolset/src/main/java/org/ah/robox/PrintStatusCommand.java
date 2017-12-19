@@ -39,8 +39,7 @@ public class PrintStatusCommand {
         boolean shortFlag = false;
         boolean allFlag = false;
         boolean jobFlag = false;
-        boolean busyFlag = false;
-        boolean pauseStatusFlag = false;
+        boolean statusFlag = false;
         boolean currentLineFlag = false;
         boolean totalLineFlag = false;
         for (String a : args) {
@@ -52,10 +51,8 @@ public class PrintStatusCommand {
                 estimateFlag = true;
             } else if ("-j".equals(a) || "--job".equals(a)) {
                 jobFlag = true;
-            } else if ("-b".equals(a) || "--busy".equals(a)) {
-                jobFlag = true;
-            } else if ("-ps".equals(a) || "--pause-status".equals(a)) {
-                pauseStatusFlag = true;
+            } else if ("-s".equals(a) || "--status".equals(a)) {
+                statusFlag = true;
             } else if ("-cl".equals(a) || "--current-line".equals(a)) {
                 currentLineFlag = true;
             } else if ("-tl".equals(a) || "--total-lines".equals(a)) {
@@ -82,35 +79,31 @@ public class PrintStatusCommand {
         }
 
         if (!shortFlag) {
-            logger.info("There a print in progress @ " + printer.getPrinterName() + "(" + printer.getPrinterChannel().getPrinterPath() + ")");
+            logger.info("Printer " +  printStatus.getCombinedStatus().getText().toLowerCase() + " @ " + printer.getPrinterName() + "(" + printer.getPrinterChannel().getPrinterPath() + ")");
         }
+
         if (jobFlag || allFlag) {
             if (shortFlag) {
                 logger.info(printJob);
             } else {
-                logger.info("    Job id      : '" + printJob + "'");
+                logger.info("    Job id       : '" + printJob + "'");
             }
         }
         if (currentLineFlag || allFlag) {
             if (shortFlag) {
                 logger.info("" + printStatus.getLineNumber());
             } else {
-                logger.info("    Current line: " + printStatus.getLineNumber());
+                logger.info("    Current line : " + printStatus.getLineNumber());
             }
         }
         if (totalLineFlag || allFlag) {
             File configDir = UploadCommand.ensureConfigDir();
             File linesFile = new File(configDir, printJob + ".lines");
             if (!linesFile.exists()) {
-//                throw new IOException("Cannot return total number of lines as there is no .gcode file specified.\n"
-//                        + "Please use rbx status -f <robox.gcode file> with this job's file (job name '" + printJob + "')\n"
-//                        + "in order for number of lines to be calculated.");
                 if (shortFlag) {
                     logger.info("No .gcode file specified");
                 } else {
-                    logger.info("    Total # line:  " + "Cannot return total number of lines as there is no .gcode file specified.\n"
-                          + "Please use rbx status -f <robox.gcode file> with this job's file (job name '" + printJob + "')\n"
-                          + "in order for number of lines to be calculated.");
+                    logger.info("    Total # lines: " + "Cannot return total number of lines as there is no .gcode file specified.");
                 }
             } else {
                 int totalLines = readNumberFromFile(configDir, linesFile);
@@ -118,23 +111,16 @@ public class PrintStatusCommand {
                 if (shortFlag) {
                     logger.info(Integer.toString(totalLines));
                 } else {
-                    logger.info("    Total # line:  " + Integer.toString(totalLines));
+                    logger.info("    Total # lines:  " + Integer.toString(totalLines));
                 }
             }
         }
 
-        if (pauseStatusFlag || allFlag) {
+        if (statusFlag || allFlag) {
             if (shortFlag) {
-                logger.info(printStatus.getPause().getText());
+                logger.info(printStatus.getCombinedStatus().getText());
             } else {
-                logger.info("    Status      : " + printStatus.getPause().getText());
-            }
-        }
-        if (busyFlag || allFlag) {
-            if (shortFlag) {
-                logger.info("" + printStatus.isBusy());
-            } else {
-                logger.info("    Busy        : " + printStatus.isBusy());
+                logger.info("    Status       : " + printStatus.getCombinedStatus().getText());
             }
         }
         if (hasRunningJobs) {
@@ -145,7 +131,7 @@ public class PrintStatusCommand {
                     if (shortFlag) {
                         logger.info("" + estimateFlag);
                     } else {
-                        logger.info("    Estimate    : " + estimateTime);
+                        logger.info("    Estimate     : " + estimateTime);
                     }
                 } catch (IOException e) {
                     logger.severe(e.getMessage());

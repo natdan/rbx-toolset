@@ -58,6 +58,7 @@ public class PrinterStatusResponse implements Response {
     public PrinterStatusResponse() {
     }
 
+    @Override
     public String toString() {
         return "Status[printJob='" + printJob + "' , lineNumber=" + lineNumber + ", pause=" + pause.getText() + ", isBusy=" + busy + "]";
     }
@@ -269,5 +270,17 @@ public class PrinterStatusResponse implements Response {
 
     public void setTemperatureState(TemperatureState temperatureState) {
         this.temperatureState = temperatureState;
+    }
+
+    public PrinterPause getCombinedStatus() {
+        if (isBusy()) {
+            if (getPause() == PrinterPause.NOT_PAUSED) {
+                return PrinterPause.WORKING;
+            } else {
+                return getPause();
+            }
+        }
+
+        return PrinterPause.IDLE;
     }
 }
