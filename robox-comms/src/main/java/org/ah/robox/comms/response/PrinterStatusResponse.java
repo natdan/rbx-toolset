@@ -280,7 +280,9 @@ public class PrinterStatusResponse implements Response {
                 return getPause();
             }
         }
-
-        return PrinterPause.IDLE;
+        if (getPause() == PrinterPause.NOT_PAUSED) {
+            return PrinterPause.IDLE;
+        }
+        return getPause();
     }
 }
