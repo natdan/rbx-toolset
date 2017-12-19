@@ -93,7 +93,7 @@ public class SendPrintJobCommand {
 
                 @Override
                 public void transmitted(int sequenceNumber, int totalBytes) throws IOException {
-                    if (totalBytes > 10240 && initiatePrintFlag) {
+                    if (totalBytes > 0 && initiatePrintFlag) {
                         @SuppressWarnings("unused")
                         StandardResponse response = printer.startPrint(printJobIdFinal);
                         // TODO do something with response
