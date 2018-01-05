@@ -14,6 +14,7 @@ package org.ah.robox.comms.request;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -34,15 +35,16 @@ public class RequestFactory {
     public static int SEND_GCODE = 0x95;
     public static int GET_PRINT_JOBS = 0x96;
     public static int PRINTER_PAUSE_RESUME_COMMAND = 0x98;
-    public static int READ_REEL_EEPROM0 = 0xA3;
-    public static int READ_REEL_EEPROM1 = 0xA5;
+    public static int WRITE_HEAD_EEPROM = 0xa0;
+    public static int READ_HEAD_EEPROM = 0xa1;
+    public static int READ_REEL_EEPROM0 = 0xa3;
+    public static int READ_REEL_EEPROM1 = 0xa5;
     public static int PRINTER_STATUS_REQ_COMMAND = 0xb0;
     public static int GET_PRINTER_DETAILS = 0xb2;
     public static int REPORT_ERRORS = 0xb3;
     public static int RESET_ERRORS = 0xc0;
     public static int WRITE_PRINTER_DETAILS = 0xc1;
     public static int ABORT_PRINT_COMMAND = 0xff;
-
 
     private OutputStream out;
 
@@ -172,5 +174,75 @@ public class RequestFactory {
             buffer[0] = (byte)READ_REEL_EEPROM1;
         }
         sendBuffer(buffer);
+    }
+
+    public void sendReadHead() throws IOException {
+        byte[] buffer = new byte[1];
+        buffer[0] = (byte)READ_HEAD_EEPROM;
+        sendBuffer(buffer);
+    }
+
+    public void sendWriteHead(HeadEEPROMRequest request) throws IOException {
+        byte[] buffer = new byte[197];
+        buffer[0] = (byte)WRITE_HEAD_EEPROM;
+        System.arraycopy((String.format("%04X", 192)).getBytes("US-ASCII"), 0, buffer, 1, 4);
+        int offset = 5;
+        offset = addToLeft(buffer, offset, 16, request.getHeadType());
+        offset = addToLeft(buffer, offset, 24, request.getHeadId());
+        offset = addToRight(buffer, offset, 8, request.getMaxTemperature().trim());
+        offset = addToRight(buffer, offset, 8, request.getBeta().trim());
+        offset = addToRight(buffer, offset, 8, request.getTcal().trim());
+
+        offset = addToRight(buffer, offset, 8, request.getX0().trim());
+        offset = addToRight(buffer, offset, 8, request.getY0().trim());
+        offset = addToRight(buffer, offset, 8, request.getZ0().trim());
+        offset = addToRight(buffer, offset, 8, request.getB0().trim());
+
+        offset = addToLeft(buffer, offset, 8, request.getFilament0().trim());
+        offset = addToLeft(buffer, offset, 8, request.getFilament1().trim());
+
+        offset = addToRight(buffer, offset, 8, request.getX1().trim());
+        offset = addToRight(buffer, offset, 8, request.getY1().trim());
+        offset = addToRight(buffer, offset, 8, request.getZ1().trim());
+        offset = addToRight(buffer, offset, 8, request.getB1().trim());
+
+        offset = addToLeft(buffer, offset, 24, "");
+
+        offset = addToRight(buffer, offset, 8, request.getLastTemperature1().trim());
+        offset = addToRight(buffer, offset, 8, request.getLastTemperature0().trim());
+        offset = addToRight(buffer, offset, 8, request.getHours().trim());
+        sendBuffer(buffer);
+    }
+
+    private int addToLeft(byte[] buffer, int offset, int size, String s) throws UnsupportedEncodingException {
+        byte[] a = formatLeft(size, s);
+        System.arraycopy(a, 0, buffer, offset, size);
+        return offset + size;
+    }
+
+    private int addToRight(byte[] buffer, int offset, int size, String s) throws UnsupportedEncodingException {
+        byte[] a = formatRight(size, s);
+        System.arraycopy(a, 0, buffer, offset, size);
+        return offset + size;
+    }
+
+    private byte[] formatLeft(int size, String s) throws UnsupportedEncodingException {
+        if (s.length() == size) {
+            return s.getBytes("US-ASCII");
+        }
+        if (s.length() > size) {
+            return s.substring(0, size).getBytes("US-ASCII");
+        }
+        return (s + "                                                                                ".substring(0, size - s.length())).getBytes("US-ASCII");
+    }
+
+    private byte[] formatRight(int size, String s) throws UnsupportedEncodingException {
+        if (s.length() == size) {
+            return s.getBytes("US-ASCII");
+        }
+        if (s.length() > size) {
+            return s.substring(0, size).getBytes("US-ASCII");
+        }
+        return ("                                                                                ".substring(0, size - s.length()) + s).getBytes("US-ASCII");
     }
 }

@@ -16,8 +16,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 
+import org.ah.robox.comms.request.HeadEEPROMRequest;
 import org.ah.robox.comms.request.RequestFactory;
 import org.ah.robox.comms.response.GCodeResponse;
+import org.ah.robox.comms.response.HeadEEPROMResponse;
 import org.ah.robox.comms.response.PrintJobsResponse;
 import org.ah.robox.comms.response.PrinterDetailsResponse;
 import org.ah.robox.comms.response.PrinterStatusResponse;
@@ -243,6 +245,30 @@ public class RoboxPrinter implements Printer {
 
         throw new UnexpectedPrinterResponse(response);
     }
+
+    @Override
+    public HeadEEPROMResponse getReadHead() throws IOException {
+        printerRequestFactory.sendReadHead();
+        Response response = printerResponseFactory.readResponse();
+        if (response instanceof HeadEEPROMResponse) {
+            return (HeadEEPROMResponse)response;
+        }
+
+        throw new UnexpectedPrinterResponse(response);
+    }
+
+    @Override
+    public StandardResponse sendWriteHead(HeadEEPROMRequest request) throws IOException {
+        printerRequestFactory.sendWriteHead(request);
+        Response response = printerResponseFactory.readResponse();
+        if (!(response instanceof StandardResponse)) {
+            throw new UnexpectedPrinterResponse(response);
+        }
+        StandardResponse standardResponse = (StandardResponse)response;
+
+        return standardResponse;
+    }
+
 
     @Override
     public String getPrinterName() {

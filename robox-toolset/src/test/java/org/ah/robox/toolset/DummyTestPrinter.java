@@ -18,7 +18,9 @@ import java.io.Reader;
 import org.ah.robox.comms.Printer;
 import org.ah.robox.comms.PrinterChannel;
 import org.ah.robox.comms.TransmitCallback;
+import org.ah.robox.comms.request.HeadEEPROMRequest;
 import org.ah.robox.comms.response.GCodeResponse;
+import org.ah.robox.comms.response.HeadEEPROMResponse;
 import org.ah.robox.comms.response.PrintJobsResponse;
 import org.ah.robox.comms.response.PrinterPause;
 import org.ah.robox.comms.response.PrinterStatusResponse;
@@ -158,6 +160,16 @@ public class DummyTestPrinter implements Printer {
 
     @Override
     public ReelEEPROMResponse getReadReel(int parseInt) throws IOException {
+        return null;
+    }
+
+    @Override
+    public HeadEEPROMResponse getReadHead() throws IOException {
+        return null;
+    }
+
+    @Override
+    public StandardResponse sendWriteHead(HeadEEPROMRequest request) throws IOException {
         // TODO Auto-generated method stub
         return null;
     }

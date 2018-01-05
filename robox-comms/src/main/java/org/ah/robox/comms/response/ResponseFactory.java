@@ -31,6 +31,7 @@ public class ResponseFactory {
 
     public static final int GET_PRINT_JOBS_RESPONSE = 0xe0;
     public static final int PRINTER_STATUS_RESPONSE = 0xe1;
+    public static final int HEAD_EEPROM_RESPONSE = 0xe2;
     public static final int STANDARD_RESPONSE = 0xe3;
     public static final int PRINTER_DETAILS_RESPONSE = 0xe5;
     public static final int REEL_EEPROM0_RESPONSE = 0xe6;
@@ -220,7 +221,31 @@ public class ResponseFactory {
             extractString("feedRate", 8, TRIM_STRING_CONVERTER);
             extractString("name", 40, TRIM_STRING_CONVERTER);
             extractString("type", 1, TRIM_STRING_CONVERTER);
+        } else if (r == HEAD_EEPROM_RESPONSE) {
+            HeadEEPROMResponse headEEPROMResponse = new HeadEEPROMResponse();
+            ptr = 0;
+            response = headEEPROMResponse;
+            buffer = new byte[192];
+            readBuffer(in, buffer);
 
+            extractString("headType", 16, TRIM_STRING_CONVERTER);
+            extractString("headId", 24, TRIM_STRING_CONVERTER);
+            extractString("maxTemperature", 8, TRIM_STRING_CONVERTER);
+            extractString("beta", 8, TRIM_STRING_CONVERTER, false);
+            extractString("tcal", 8, TRIM_STRING_CONVERTER);
+            extractString("x0", 8, TRIM_STRING_CONVERTER);
+            extractString("y0", 8, TRIM_STRING_CONVERTER);
+            extractString("z0", 8, TRIM_STRING_CONVERTER);
+            extractString("b0", 8, TRIM_STRING_CONVERTER);
+            skip(16);
+            extractString("x1", 8, TRIM_STRING_CONVERTER);
+            extractString("y1", 8, TRIM_STRING_CONVERTER);
+            extractString("z1", 8, TRIM_STRING_CONVERTER);
+            extractString("b1", 8, TRIM_STRING_CONVERTER);
+            skip(24);
+            extractString("lastTemperature1", 8, TRIM_STRING_CONVERTER);
+            extractString("lastTemperature0", 8, TRIM_STRING_CONVERTER);
+            extractString("hours", 8, TRIM_STRING_CONVERTER);
         } else {
             buffer = new byte[in.available()];
             readBuffer(in, buffer);

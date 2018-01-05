@@ -120,6 +120,12 @@ public class Main {
             } else if ("readreel".equals(arg)) {
                 command = "readreel";
                 furtherArgsFlag = true;
+            } else if ("readhead".equals(arg)) {
+                command = "readhead";
+                furtherArgsFlag = true;
+            } else if ("calibrate".equals(arg)) {
+                command = "calibrate";
+                furtherArgsFlag = true;
             } else if ("upload".equals(arg)) {
                 command = "upload";
                 furtherArgsFlag = true;
@@ -240,6 +246,10 @@ public class Main {
                         PrintStatusCommand.execute(selectedPrinter, furtherArgs);
                     } else if ("readreel".equals(command)) {
                         ReadReelCommand.execute(selectedPrinter, furtherArgs);
+                    } else if ("readhead".equals(command)) {
+                        ReadHeadCommand.execute(selectedPrinter, furtherArgs);
+                    } else if ("calibrate".equals(command)) {
+                        CalibrateHeadCommand.execute(selectedPrinter, furtherArgs);
                     } else if ("pause".equals(command)) {
                         PausePrinterCommand.execute(selectedPrinter, furtherArgs);
                     } else if ("resume".equals(command)) {
@@ -290,18 +300,21 @@ public class Main {
         logger.info("");
         logger.info("  Supported commands are:");
         logger.info("");
-        logger.info("  install  - installs in local (linux) system");
-        logger.info("  list     - lists attached printers");
-        logger.info("  status   - displays printer's status");
-        logger.info("  pause    - pauses current print if there's one");
-        logger.info("  resume   - resumes current print if there's one");
-        logger.info("  abort    - aborts current print if there's one");
-        logger.info("  upload   - sets print file for status command");
-        logger.info("  gcode    - sends gcode command to the printer");
-        logger.info("  send     - creates a print job and send gcode (file) it to the printer");
-        logger.info("  start    - starts print job that is already in the printer");
-        logger.info("  jobs     - lists jobs stored on ther printer");
-        logger.info("  proxy    - sets up serial proxy for the printer");
+        logger.info("  install   - installs in local (linux) system");
+        logger.info("  list      - lists attached printers");
+        logger.info("  status    - displays printer's status");
+        logger.info("  pause     - pauses current print if there's one");
+        logger.info("  resume    - resumes current print if there's one");
+        logger.info("  abort     - aborts current print if there's one");
+        logger.info("  upload    - sets print file for status command");
+        logger.info("  gcode     - sends gcode command to the printer");
+        logger.info("  send      - creates a print job and send gcode (file) it to the printer");
+        logger.info("  start     - starts print job that is already in the printer");
+        logger.info("  jobs      - lists jobs stored on ther printer");
+        logger.info("  readreel  - reads reel eeprom");
+        logger.info("  readhead  - reads head eeprom");
+        logger.info("  calibrate - calibrates - writes head eeprom");
+        logger.info("  proxy     - sets up serial proxy for the printer");
         logger.info("");
         logger.info("  Tip: further help can be obtained if '-h'/'-?'/'--help; is specified");
         logger.info("  after commmand. Example: ");
