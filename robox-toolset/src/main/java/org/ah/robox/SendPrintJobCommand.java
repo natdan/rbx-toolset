@@ -102,7 +102,7 @@ public class SendPrintJobCommand {
                     if (Main.logLevel.intValue() <= Level.FINE.intValue()) {
                         bytes = bytes + 512;
                         if (bytes >= 8192) {
-                            logger.fine(".");
+                            System.out.print(".");
                             bytes = 0;
                         }
                     }
