@@ -193,7 +193,8 @@ public class RoboxPrinter implements Printer {
         BufferedReader in = new BufferedReader(gcodeReader);
         StringBuilder buffer = new StringBuilder();
         String line = in.readLine();
-        while (line != null) {
+        boolean cont = true;
+        while (cont && line != null) {
             int i = line.indexOf(';');
             if (i >= 0) {
                 line = line.substring(0, i);
@@ -216,7 +217,7 @@ public class RoboxPrinter implements Printer {
                     totalBytes = totalBytes + 512;
 
                     if (callback != null) {
-                        callback.transmitted(sequence, totalBytes);
+                        cont = callback.transmitted(sequence, totalBytes);
                     }
                     sequence = sequence + 1;
                 }

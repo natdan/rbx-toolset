@@ -82,9 +82,9 @@ public class TemplateEngine {
             substitutions.put("door_open", swtchToString(ps.isDoorOpen()));
             substitutions.put("reel_button", swtchToString(ps.isReelButton()));
 
-            substitutions.put("nozzle_temp", ps.getNozzleTemperature());
-            substitutions.put("nozzle_set_temp", ps.getNozzleSetTemperature());
-            substitutions.put("nozzle_temp_combined", ps.getNozzleTemperature() + " / " + ps.getNozzleSetTemperature());
+            substitutions.put("nozzle_temp", ps.getNozzle0Temperature());
+            substitutions.put("nozzle_set_temp", ps.getNozzle0SetTemperature());
+            substitutions.put("nozzle_temp_combined", ps.getNozzle0Temperature() + " / " + ps.getNozzle0SetTemperature());
 
             substitutions.put("bed_temp", ps.getBedTemperature());
             substitutions.put("bed_set_temp", ps.getBedSetTemperature());
@@ -102,7 +102,9 @@ public class TemplateEngine {
             substitutions.put("z_position", ps.getZPosition());
 
             substitutions.put("filament_multiplier", ps.getFilamentMultiplier());
-            substitutions.put("feed_rate_multiplier", ps.getFeedRateMultiplier());
+            substitutions.put("feed_rate_multiplier", ps.getFeedRateMultiplier1());
+            substitutions.put("feed_rate_multiplier1", ps.getFeedRateMultiplier1());
+            substitutions.put("feed_rate_multiplier0", ps.getFeedRateMultiplier0());
 
             substitutions.put("temp_state", ps.getTemperatureState().getText());
         } else {

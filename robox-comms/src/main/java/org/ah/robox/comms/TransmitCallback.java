@@ -21,6 +21,14 @@ import java.io.IOException;
  */
 public interface TransmitCallback {
 
-    void transmitted(int sequenceNumber, int totalBytes) throws IOException;
+    /**
+     * Transmitting callback
+     *
+     * @param sequenceNumber
+     * @param totalBytes
+     * @return <code>false</code> if upload needs to be aborted
+     * @throws IOException
+     */
+    boolean transmitted(int sequenceNumber, int totalBytes) throws IOException;
 
 }

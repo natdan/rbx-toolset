@@ -12,10 +12,13 @@
  *******************************************************************************/
 package org.ah.robox;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.logging.Logger;
 
 import org.ah.robox.comms.Printer;
+import org.ah.robox.comms.response.PrinterPause;
+import org.ah.robox.comms.response.PrinterStatusResponse;
 import org.ah.robox.comms.response.StandardResponse;
 
 /**
@@ -63,11 +66,23 @@ public class AbortPrintCommand {
             }
         }
 
+        abort(printer);
+    }
+
+    public static void abort(Printer printer) throws IOException {
         StandardResponse response = printer.abortPrint();
         if (Main.processStandardResponse(printer, response)) {
             GCodeCommand.sendGCode(printer, FINISH_PRINT_GCODE);
         }
+    }
 
+    public static void conditionalAbort(Printer printer) throws IOException {
+        PrinterStatusResponse printerStatus = printer.getPrinterStatus();
+
+        PrinterPause status = printerStatus.getCombinedStatus();
+        if (status != PrinterPause.IDLE) {
+            abort(printer);
+        }
     }
 
     public static void printHelp() {

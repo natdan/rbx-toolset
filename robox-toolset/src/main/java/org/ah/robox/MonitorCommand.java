@@ -21,124 +21,43 @@ import java.util.logging.Logger;
 
 import org.ah.robox.comms.Printer;
 import org.ah.robox.comms.response.PrinterStatusResponse;
+import org.ah.robox.ui.MonitorWindow;
+import org.ah.robox.util.Detach;
 
 /**
  *
  *
  * @author Daniel Sendula
  */
-public class PrintStatusCommand {
+public class MonitorCommand {
 
-    private static final Logger logger = Logger.getLogger(PrintStatusCommand.class.getName());
+    private static final Logger logger = Logger.getLogger(MonitorCommand.class.getName());
 
-    public static int ESTIMATE_MIN_LINES = 100; // 100 is arbirtary number that is greater than setup: heating heads/bed, home, short purge, etc...
+    public static int STATUS_TIMER = 1000; // each second
+
+    public static long lastStatus = 0;
 
     public static void execute(Printer printer, List<String> args) throws Exception {
 
-        boolean estimateFlag = false;
-        boolean shortFlag = false;
-        boolean allFlag = false;
-        boolean jobFlag = false;
-        boolean statusFlag = false;
-        boolean currentLineFlag = false;
-        boolean totalLineFlag = false;
-        for (String a : args) {
-            if ("-s".equals(a) || "--short".equals(a)) {
-                shortFlag = true;
-            } else if ("-a".equals(a) || "--all".equals(a)) {
-                allFlag = true;
-            } else if ("-e".equals(a) || "--estimate".equals(a)) {
-                estimateFlag = true;
-            } else if ("-j".equals(a) || "--job".equals(a)) {
-                jobFlag = true;
-            } else if ("-s".equals(a) || "--status".equals(a)) {
-                statusFlag = true;
-            } else if ("-cl".equals(a) || "--current-line".equals(a)) {
-                currentLineFlag = true;
-            } else if ("-tl".equals(a) || "--total-lines".equals(a)) {
-                totalLineFlag = true;
-            } else if ("-h".equals(a) || "--help".equals(a) || "-?".equals(a)) {
-                printHelp();
-                System.exit(0);
-            } else {
-                logger.severe("Unknown option: '" + a + "'");
-                printHelp();
-                System.exit(1);
+        if (!Main.detachedFlag) {
+
+            Detach.detach(Main.class.getName());
+        } else {
+
+            MonitorWindow monitorWindow = new MonitorWindow();
+            monitorWindow.setVisible(true);
+
+            PrinterStatusResponse printStatus = printer.getPrinterStatus();
+
+            String printJob = printStatus.getPrintJob();
+
+            boolean hasRunningJobs = printJob != null && printJob.length() > 0;
+
+            UploadCommand.cleanupConfigDir(printJob);
+            if (printStatus.getLineNumber() > PrintStatusCommand.ESTIMATE_MIN_LINES) {
+                createEstimateFile(printJob, printStatus.getLineNumber());
             }
-        }
 
-        PrinterStatusResponse printStatus = printer.getPrinterStatus();
-        printStatus = printer.getPrinterStatus();
-
-        String printJob = printStatus.getPrintJob();
-
-        boolean hasRunningJobs = printJob != null && printJob.length() > 0;
-
-        UploadCommand.cleanupConfigDir(printJob);
-        if (printStatus.getLineNumber() > ESTIMATE_MIN_LINES) {
-            createEstimateFile(printJob, printStatus.getLineNumber());
-        }
-
-        if (!shortFlag) {
-            logger.info("Printer " +  printStatus.getCombinedStatus().getText().toLowerCase() + " @ " + printer.getPrinterName() + "(" + printer.getPrinterChannel().getPrinterPath() + ")");
-        }
-
-        if (jobFlag || allFlag) {
-            if (shortFlag) {
-                logger.info(printJob);
-            } else {
-                logger.info("    Job id       : '" + printJob + "'");
-            }
-        }
-        if (currentLineFlag || allFlag) {
-            if (shortFlag) {
-                logger.info("" + printStatus.getLineNumber());
-            } else {
-                logger.info("    Current line : " + printStatus.getLineNumber());
-            }
-        }
-        if (totalLineFlag || allFlag) {
-            File configDir = UploadCommand.ensureConfigDir();
-            File linesFile = new File(configDir, printJob + ".lines");
-            if (!linesFile.exists()) {
-                if (shortFlag) {
-                    logger.info("No .gcode file specified");
-                } else {
-                    logger.info("    Total # lines: " + "Cannot return total number of lines as there is no .gcode file specified.");
-                }
-            } else {
-                int totalLines = readNumberFromFile(configDir, linesFile);
-
-                if (shortFlag) {
-                    logger.info(Integer.toString(totalLines));
-                } else {
-                    logger.info("    Total # lines:  " + Integer.toString(totalLines));
-                }
-            }
-        }
-
-        if (statusFlag || allFlag) {
-            if (shortFlag) {
-                logger.info(printStatus.getCombinedStatus().getText());
-            } else {
-                logger.info("    Status       : " + printStatus.getCombinedStatus().getText());
-            }
-        }
-        if (hasRunningJobs) {
-            if (estimateFlag) {
-                try {
-                    Estimate estimate = calculateEstimate(printJob, printStatus.getLineNumber(), System.currentTimeMillis());
-                    String estimateTime = estimate.toString();
-                    if (shortFlag) {
-                        logger.info("" + estimateFlag);
-                    } else {
-                        logger.info("    Estimate     : " + estimateTime);
-                    }
-                } catch (IOException e) {
-                    logger.severe(e.getMessage());
-                    System.exit(1);
-                }
-            }
         }
     }
 
@@ -206,7 +125,7 @@ public class PrintStatusCommand {
         File configDir = UploadCommand.ensureConfigDir();
         File estimateFile = new File(configDir, printJob + ".estimate");
         if (!estimateFile.exists()) {
-            if (currentLine > ESTIMATE_MIN_LINES) { // 100 is arbirtary number that is greater than setup: heating heads/bed, home, short purge, etc...
+            if (currentLine > PrintStatusCommand.ESTIMATE_MIN_LINES) { // 100 is arbirtary number that is greater than setup: heating heads/bed, home, short purge, etc...
                 createEstimateFile(printJob, currentLine);
             } else {
                 return new Estimate(0, 0, 0, -1, EstimateState.PREPARING);
@@ -338,5 +257,16 @@ public class PrintStatusCommand {
         public int getTotalLines() {
             return totalLines;
         }
+    }
+
+    public static void processPrinterStatus(MonitorWindow monitorWindow, PrinterStatusResponse printStatus) {
+        monitorWindow.setStatus(printStatus.getCombinedStatus());
+        monitorWindow.setJobId(printStatus.getPrintJob());
+        monitorWindow.setBedTemperature(printStatus.getBedTemperature());
+        monitorWindow.setBedSetTemperature(printStatus.getBedSetTemperature());
+        monitorWindow.setHead0Temperature(printStatus.getNozzle0Temperature());
+        monitorWindow.setHead1Temperature(printStatus.getNozzle1Temperature());
+        monitorWindow.setHead0SetTemperature(printStatus.getNozzle0SetTemperature());
+        monitorWindow.setHead1SetTemperature(printStatus.getNozzle1SetTemperature());
     }
 }

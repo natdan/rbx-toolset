@@ -92,7 +92,7 @@ public class UploadCommand {
     }
 
     public static void printHelp() {
-        logger.info("Usage: rbx [<general-options>] update [<specific-options>]");
+        logger.info("Usage: rbx [<general-options>] upload [<specific-options>]");
         logger.info("");
         logger.info("  General options are one of these:");
         logger.info("  -v | --verbose   - increases voutput erbosity level");
@@ -156,7 +156,7 @@ public class UploadCommand {
         if (configDir.exists()) {
             for (File f : configDir.listFiles()) {
                 String fileName = f.getName();
-                if (!fileName.startsWith(".") && !fileName.startsWith(jobName)) {
+                if (!fileName.startsWith(".") && !fileName.startsWith(jobName) && !fileName.equals(".conf")) {
                     long created = f.lastModified();
                     if (created < twoDaysAgo) {
                         f.delete();

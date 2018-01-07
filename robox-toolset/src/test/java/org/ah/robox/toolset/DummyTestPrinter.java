@@ -57,7 +57,7 @@ public class DummyTestPrinter implements Printer {
         printerStatusResponse.setYPosition("20.003");
         printerStatusResponse.setZPosition("5.004");
         printerStatusResponse.setFilamentMultiplier("0.85");
-        printerStatusResponse.setFeedRateMultiplier("0.9");
+        printerStatusResponse.setFeedRateMultiplier1("0.9");
     }
 
     @Override

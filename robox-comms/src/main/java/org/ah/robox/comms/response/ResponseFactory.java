@@ -65,7 +65,7 @@ public class ResponseFactory {
 
         if (r == PRINTER_STATUS_RESPONSE) {
             response = new PrinterStatusResponse();
-            buffer = new byte[210];
+            buffer = new byte[220];
             ptr = 0;
             readBuffer(in, buffer);
 
@@ -87,12 +87,15 @@ public class ResponseFactory {
             skip(5);
             skip(1);
 
-            extractString("nozzleTemperature", 8, TRIM_STRING_CONVERTER);
-            extractString("nozzleSetTemperature", 8, TRIM_STRING_CONVERTER);
+            extractString("nozzle0Temperature", 8, TRIM_STRING_CONVERTER);
+            extractString("nozzle0SetTemperature", 8, TRIM_STRING_CONVERTER);
 
             skip(9);
 
-            skip(25);
+            extractString("nozzle1Temperature", 8, TRIM_STRING_CONVERTER);
+            extractString("nozzle1SetTemperature", 8, TRIM_STRING_CONVERTER);
+
+            skip(9);
 
             extractString("bedTemperature", 8, TRIM_STRING_CONVERTER);
             extractString("bedSetTemperature", 8, TRIM_STRING_CONVERTER);
@@ -119,8 +122,9 @@ public class ResponseFactory {
             extractString("filamentMultiplier", 8, TRIM_STRING_CONVERTER);
             skip(8);
             skip(8);
-            extractString("feedRateMultiplier", 8, TRIM_STRING_CONVERTER);
-
+            extractString("feedRateMultiplier1", 8, TRIM_STRING_CONVERTER);
+            extractString("feedRateMultiplier0", 8, TRIM_STRING_CONVERTER);
+            skip(1);
 
         } else if (r == STANDARD_RESPONSE) {
             StandardResponse response = new StandardResponse();

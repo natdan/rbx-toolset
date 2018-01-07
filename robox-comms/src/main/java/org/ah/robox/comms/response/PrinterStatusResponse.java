@@ -34,8 +34,11 @@ public class PrinterStatusResponse implements Response {
     private boolean doorOpen;
     private boolean reelButton;
 
-    private String nozzleTemperature;
-    private String nozzleSetTemperature;
+    private String nozzle0Temperature;
+    private String nozzle0SetTemperature;
+
+    private String nozzle1Temperature;
+    private String nozzle1SetTemperature;
 
     private String bedTemperature;
     private String bedSetTemperature;
@@ -51,7 +54,8 @@ public class PrinterStatusResponse implements Response {
     private String zPosition;
 
     private String filamentMultiplier;
-    private String feedRateMultiplier;
+    private String feedRateMultiplier1;
+    private String feedRateMultiplier0;
 
     private TemperatureState temperatureState = TemperatureState.WORKING;
 
@@ -160,20 +164,36 @@ public class PrinterStatusResponse implements Response {
         this.reelButton = reelButton;
     }
 
-    public String getNozzleTemperature() {
-        return nozzleTemperature;
+    public String getNozzle0Temperature() {
+        return nozzle0Temperature;
     }
 
-    public void setNozzleTemperature(String nozzleTemperature) {
-        this.nozzleTemperature = nozzleTemperature;
+    public void setNozzle0Temperature(String nozzleTemperature) {
+        this.nozzle0Temperature = nozzleTemperature;
     }
 
-    public String getNozzleSetTemperature() {
-        return nozzleSetTemperature;
+    public String getNozzle0SetTemperature() {
+        return nozzle0SetTemperature;
     }
 
-    public void setNozzleSetTemperature(String nozzleSetTemperature) {
-        this.nozzleSetTemperature = nozzleSetTemperature;
+    public void setNozzle0SetTemperature(String nozzleSetTemperature) {
+        this.nozzle0SetTemperature = nozzleSetTemperature;
+    }
+
+    public String getNozzle1Temperature() {
+        return nozzle1Temperature;
+    }
+
+    public void setNozzle1Temperature(String nozzleTemperature) {
+        this.nozzle1Temperature = nozzleTemperature;
+    }
+
+    public String getNozzle1SetTemperature() {
+        return nozzle1SetTemperature;
+    }
+
+    public void setNozzle1SetTemperature(String nozzleSetTemperature) {
+        this.nozzle1SetTemperature = nozzleSetTemperature;
     }
 
     public String getBedTemperature() {
@@ -256,12 +276,20 @@ public class PrinterStatusResponse implements Response {
         this.filamentMultiplier = filamentMultiplier;
     }
 
-    public String getFeedRateMultiplier() {
-        return feedRateMultiplier;
+    public String getFeedRateMultiplier0() {
+        return feedRateMultiplier0;
     }
 
-    public void setFeedRateMultiplier(String feedRateMultiplier) {
-        this.feedRateMultiplier = feedRateMultiplier;
+    public void setFeedRateMultiplier0(String feedRateMultiplier0) {
+        this.feedRateMultiplier0 = feedRateMultiplier0;
+    }
+
+    public String getFeedRateMultiplier1() {
+        return feedRateMultiplier1;
+    }
+
+    public void setFeedRateMultiplier1(String feedRateMultiplier1) {
+        this.feedRateMultiplier1 = feedRateMultiplier1;
     }
 
     public TemperatureState getTemperatureState() {
@@ -285,4 +313,5 @@ public class PrinterStatusResponse implements Response {
         }
         return getPause();
     }
+
 }

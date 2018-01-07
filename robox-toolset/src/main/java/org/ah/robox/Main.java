@@ -47,10 +47,14 @@ public class Main {
 
     public static Level logLevel = Level.INFO;
     public static boolean remoteFlag = false;
+    public static boolean detachedFlag = false;
+    public static String[] originalArgs;
 
     public static Logger logger;
 
     public static void main(String[] args) throws Exception {
+
+        originalArgs = args;
 
         Formatter formatter = new LocalFormatter();
 
@@ -66,6 +70,11 @@ public class Main {
             rootLogger.removeHandler(h);
         }
         rootLogger.addHandler(consoleHandler);
+
+        for (String loggerName : new String[] { "javax", "java", "sun" }) {
+            Logger logger = Logger.getLogger(loggerName);
+            logger.setLevel(Level.INFO);
+        }
         Logger.getAnonymousLogger().addHandler(consoleHandler);
 
         logger = Logger.getLogger("NetworkSerialPort");
@@ -85,6 +94,8 @@ public class Main {
             } else if (printerFlag) {
                 printerId = arg;
                 printerFlag = false;
+            } else if ("---detached".equals(arg)) {
+                detachedFlag = true;
             } else if ("-j".equals(arg) || "--jssc".equals(arg)) {
                 jsscFlag = true;
                 rxtxFlag = true;
@@ -98,8 +109,6 @@ public class Main {
             } else if ("-vv".equals(arg)) {
                 logLevel = Level.FINER;
             } else if ("-vvv".equals(arg)) {
-                logLevel = Level.FINEST;
-            } else if ("-d".equals(arg) || "--debug".equals(arg)) {
                 logLevel = Level.FINEST;
             } else if ("-r".equals(arg) || "--remote".equals(arg)) {
                 remoteFlag = true;
@@ -125,6 +134,9 @@ public class Main {
                 furtherArgsFlag = true;
             } else if ("calibrate".equals(arg)) {
                 command = "calibrate";
+                furtherArgsFlag = true;
+            } else if ("monitor".equals(arg)) {
+                command = "monitor";
                 furtherArgsFlag = true;
             } else if ("upload".equals(arg)) {
                 command = "upload";
@@ -250,6 +262,8 @@ public class Main {
                         ReadHeadCommand.execute(selectedPrinter, furtherArgs);
                     } else if ("calibrate".equals(command)) {
                         CalibrateHeadCommand.execute(selectedPrinter, furtherArgs);
+                    } else if ("monitor".equals(command)) {
+                        MonitorCommand.execute(selectedPrinter, furtherArgs);
                     } else if ("pause".equals(command)) {
                         PausePrinterCommand.execute(selectedPrinter, furtherArgs);
                     } else if ("resume".equals(command)) {
@@ -265,6 +279,9 @@ public class Main {
                     } else if ("start".equals(command)) {
                         StartPrintJobCommand.execute(selectedPrinter, furtherArgs);
                     }
+                } catch (Exception e) {
+                    logger.info("Error: " + e.getMessage());
+                    logger.log(Level.FINE, "Got exception", e);
                 } finally {
                     if (selectedPrinter != null) {
                         selectedPrinter.close();
@@ -277,7 +294,8 @@ public class Main {
     public static void printGeneralOptions() {
         logger.info("  General options are one of these:");
         logger.info("  -v | --verbose   - increases voutput erbosity level");
-        logger.info("  -d | --debug     - increases debug level");
+        logger.info("  -vv              - increases debug level");
+        logger.info("  -vvv             - maximm debug output level");
         logger.info("  -r | --remote    - include remote printers in discovery");
         logger.info("  -p | --printer   - if more than one printer is connected to your");
         logger.info("                     computer you must select which one command is");
