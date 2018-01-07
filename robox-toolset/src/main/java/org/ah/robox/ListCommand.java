@@ -32,7 +32,7 @@ public class ListCommand {
             logger.info("Detected printers:");
             int i = 1;
             for (Printer printer : printers) {
-                logger.info("    " + i + ":" + printer.getPrinterName() + " @ " + printer.getPrinterChannel().getPrinterPath());
+                logger.info("    " + i + ":" + printer.getPrinterName() + " @ " + printer.getPrinterChannel().getPrinterPath() + "(id: " + printer.getPrinterId() + ")");
                 printer.close();
                 i++;
             }
