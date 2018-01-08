@@ -47,11 +47,14 @@ import org.ah.robox.comms.response.PrinterPause;
 public class MonitorWindow extends JFrame {
 
     private boolean uploading;
+    private int totalLines;
+
     private JPanel mainPanel;
     private JButton abortButton;
     private JButton pauseResumeButton;
     private JLabel uploadingLabel;
     private JProgressBar uploadingProgress;
+    private JLabel linesProgressLabel;
     private JLabel linesLabel;
     private JProgressBar linesProgress;
 
@@ -236,12 +239,14 @@ public class MonitorWindow extends JFrame {
         mainPanel.add(head1Temp);
 
         createButtons();
+        linesProgressLabel = new JLabel("Progress lines ");
 
         linesLabel = new JLabel("Progress");
         linesProgress = new JProgressBar(JProgressBar.HORIZONTAL);
         linesProgress.setMinimumSize(new Dimension(0, 20));
 
         mainPanel.add(linesLabel);
+        mainPanel.add(linesProgressLabel);
         mainPanel.add(linesProgress);
 
         uploadingLabel = new JLabel("Uploading");
@@ -311,10 +316,13 @@ public class MonitorWindow extends JFrame {
         layout.putConstraint(WEST, bedLabel, 0, WEST, head0Label);
 
 
-        layout.putConstraint(NORTH, linesLabel, 15, SOUTH, jobLabel);
-        layout.putConstraint(WEST, linesLabel, 5, WEST, mainPanel);
+        layout.putConstraint(NORTH, linesProgressLabel, 15, SOUTH, jobLabel);
+        layout.putConstraint(WEST, linesProgressLabel, 5, WEST, mainPanel);
 
-        layout.putConstraint(NORTH, linesProgress, 5, SOUTH, linesLabel);
+        layout.putConstraint(NORTH, linesLabel, 0, NORTH, linesProgressLabel);
+        layout.putConstraint(WEST, linesLabel, 15, EAST, linesProgressLabel);
+
+        layout.putConstraint(NORTH, linesProgress, 5, SOUTH, linesProgressLabel);
         layout.putConstraint(WEST, linesProgress, 5, WEST, mainPanel);
         layout.putConstraint(EAST, linesProgress, -30, WEST, head0Label);
 
@@ -387,18 +395,35 @@ public class MonitorWindow extends JFrame {
 
     public void setUploading(boolean uploading) {
         this.uploading = uploading;
+        if (!uploading) {
+            uploadingLabel.setText("Uploaded.");
+            uploadingProgress.setValue(uploadingProgress.getMaximum());
+        } else {
+            uploadingLabel.setText("Uploading");
+        }
 //        uploadingLabel.setVisible(uploading);
 //        uploadingProgress.setVisible(uploading);
 //        uploadingFileLabel.setVisible(uploading);
 //        uploadingFileText.setVisible(uploading);
     }
 
-    public void setUploadTotal(long length) {
-        uploadingProgress.setMaximum((int)length);
+    public void setUploadTotal(int length) {
+        uploadingProgress.setMaximum(length);
     }
 
     public void setUploadProgress(int totalBytes) {
         uploadingProgress.setValue(totalBytes);
+    }
+
+    public void setLinesTotal(int linesTotal) {
+        this.totalLines = linesTotal;
+        linesProgress.setMaximum(linesTotal);
+        linesLabel.setText("0 of " + linesTotal);
+    }
+
+    public void setLinesProgress(int lines) {
+        linesProgress.setValue(lines);
+        linesLabel.setText(lines + " of " + totalLines);
     }
 
     public void setPrintingTotal(int progress) {

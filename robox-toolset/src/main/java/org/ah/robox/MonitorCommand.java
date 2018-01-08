@@ -262,6 +262,7 @@ public class MonitorCommand {
     public static void processPrinterStatus(MonitorWindow monitorWindow, PrinterStatusResponse printStatus) {
         monitorWindow.setStatus(printStatus.getCombinedStatus());
         monitorWindow.setJobId(printStatus.getPrintJob());
+        monitorWindow.setLinesProgress(printStatus.getLineNumber());
         monitorWindow.setBedTemperature(printStatus.getBedTemperature());
         monitorWindow.setBedSetTemperature(printStatus.getBedSetTemperature());
         monitorWindow.setHead0Temperature(printStatus.getNozzle0Temperature());

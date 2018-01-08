@@ -301,4 +301,57 @@ public class UploadCommand {
         }
         return configDir;
     }
+
+
+    /**
+     * @param inJobFile
+     * @param destJobFile
+     * @return
+     */
+    public static int countLines(File inJobFile) throws IOException {
+        int numberOfLines = 0;
+        int state = BEGINNING_OF_LINE;
+        byte[] buffer = new byte[10240];
+
+        try {
+            FileInputStream in = null;
+            try {
+                in = new FileInputStream(inJobFile);
+            } catch (IOException e) {
+                throw new IOException("Error opening file " + inJobFile.getAbsolutePath(), e);
+            }
+            try {
+                int r = in.read(buffer);
+                while (r > 0) {
+                    for (int i = 0; i < r; i++) {
+                        byte b = buffer[i];
+                        if (state == BEGINNING_OF_LINE) {
+                            if (b == ';') {
+                                state = COMMENT;
+                            } else if (b > ' ') {
+                                numberOfLines = numberOfLines + 1;
+                                state = DETECTED_LINE;
+                            }
+                        } else if (state == DETECTED_LINE) {
+                            if (b == '\n') {
+                                state = BEGINNING_OF_LINE;
+                            }
+                        } else if (state == COMMENT) {
+                            if (b == '\n') {
+                                state = BEGINNING_OF_LINE;
+                            }
+                        }
+                    }
+                    r = in.read(buffer);
+                }
+            } finally {
+                in.close();
+            }
+        } catch (IOException e) {
+            throw new IOException("Error reading from file " + inJobFile.getAbsolutePath(), e);
+        }
+
+        return numberOfLines;
+    }
+
 }

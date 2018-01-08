@@ -139,13 +139,22 @@ public class SendPrintJobCommand {
 
             StandardResponse response = null;
 
+            if (monitor) {
+                try {
+                    int totalLines = UploadCommand.countLines(file);
+                    monitorWindow.setLinesTotal(totalLines);
+                } catch (IOException e) {
+                    monitorWindow.setExceptionError("Exception reading file " + file.getAbsolutePath(), e);
+                }
+            }
+
             FileReader reader = new FileReader(file);
             try {
                 if (!monitor) {
                     logger.info("Job id: " + printJobId);
                     logger.fine("Sending data (each dot - 8Kb): ");
                 } else {
-                    monitorWindow.setUploadTotal(file.length());
+                    monitorWindow.setUploadTotal((int)file.length());
                 }
                 final boolean initialPrintFlagFinal = initiatePrintFlag;
                 final String printJobIdFinal = printJobId;
