@@ -449,12 +449,12 @@ public class MonitorWindow extends JFrame {
         }
     }
 
-    public void setAbortUploadingAction(Runnable abortPrinting) {
-        this.abortPrinting = abortPrinting;
+    public void setAbortUploadingAction(Runnable abortUploading) {
+        this.abortUploading = abortUploading;
     }
 
-    public void setAbortPrintingAction(Runnable abortUploading) {
-        this.abortUploading = abortUploading;
+    public void setAbortPrintingAction(Runnable abortPrinting) {
+        this.abortPrinting = abortPrinting;
     }
 
     public void setPausePrintingAction(Runnable pausePrinting) {

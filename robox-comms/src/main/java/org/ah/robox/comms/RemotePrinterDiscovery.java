@@ -69,7 +69,9 @@ public class RemotePrinterDiscovery extends BasePrinterDiscovery {
 
                         PrinterChannel channel = channels.get(devName);
                         if (channel != null) {
-                            printerChannels.add(channel);
+                            if (!containsChannel(printerChannels, channel)) {
+                                printerChannels.add(channel);
+                            }
                         } else {
                             PrinterChannel printerChannel = new RemotelPortPrinterChannel(devName);
                             try {
@@ -96,5 +98,14 @@ public class RemotePrinterDiscovery extends BasePrinterDiscovery {
         }
 
         return printerChannels;
+    }
+
+    private boolean containsChannel(List<PrinterChannel> printerChannels, PrinterChannel channel) {
+        for (PrinterChannel c : printerChannels) {
+            if (c.getPrinterPath().equals(channel.getPrinterPath())) {
+                return true;
+            }
+        }
+        return false;
     }
 }
