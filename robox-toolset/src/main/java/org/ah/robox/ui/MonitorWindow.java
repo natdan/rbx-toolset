@@ -30,7 +30,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
 
 import javax.swing.JButton;
@@ -42,9 +44,18 @@ import javax.swing.JTextField;
 import javax.swing.SpringLayout;
 import javax.swing.Timer;
 
+import org.ah.robox.comms.Printer;
 import org.ah.robox.comms.response.PrinterPause;
+import org.ah.robox.comms.response.PrinterStatusResponse;
+import org.ah.robox.comms.response.StandardResponse;
 
 public class MonitorWindow extends JFrame {
+
+    public static interface IOAction {
+        void execute() throws IOException;
+    }
+
+    public static int STATUS_TIMER = 1000; // each second
 
     private boolean uploading;
     private int totalLines;
@@ -73,6 +84,10 @@ public class MonitorWindow extends JFrame {
     private JLabel uploadingFileLabel;
     private JLabel uploadingFileText;
     private Timer postponeSavePosition;
+
+    private List<IOAction> actions = new ArrayList<IOAction>();
+
+    public long lastStatus = 0;
 
     public MonitorWindow() {
         super("Robox Slicer Extension");
@@ -285,24 +300,24 @@ public class MonitorWindow extends JFrame {
         layout.putConstraint(EAST, targetBedTemp, 0, EAST, targetLabel);
         layout.putConstraint(WEST, targetBedTemp, 0, WEST, targetLabel);
 
-        layout.putConstraint(NORTH, targetHead0Temp, 0, NORTH, head0Temp);
+        layout.putConstraint(NORTH, targetHead0Temp, 5, SOUTH, targetBedTemp);
         layout.putConstraint(EAST, targetHead0Temp, 0, EAST, targetLabel);
         layout.putConstraint(WEST, targetHead0Temp, 0, WEST, targetLabel);
 
-        layout.putConstraint(NORTH, targetHead1Temp, 0, NORTH, head1Temp);
+        layout.putConstraint(NORTH, targetHead1Temp, 5, SOUTH, targetHead0Temp);
         layout.putConstraint(EAST, targetHead1Temp, 0, EAST, targetLabel);
         layout.putConstraint(WEST, targetHead1Temp, 0, WEST, targetLabel);
 
 
-        layout.putConstraint(NORTH, bedTemp, 5, NORTH, targetBedTemp);
+        layout.putConstraint(SOUTH, bedTemp, -5, SOUTH, targetBedTemp);
         layout.putConstraint(EAST, bedTemp, 0, EAST, actualLabel);
         layout.putConstraint(WEST, bedTemp, 0, WEST, actualLabel);
 
-        layout.putConstraint(NORTH, head0Temp, 5, SOUTH, bedTemp);
+        layout.putConstraint(SOUTH, head0Temp, -5, SOUTH, targetHead0Temp);
         layout.putConstraint(EAST, head0Temp, 0, EAST, actualLabel);
         layout.putConstraint(WEST, head0Temp, 0, WEST, actualLabel);
 
-        layout.putConstraint(NORTH, head1Temp, 5, SOUTH, head0Temp);
+        layout.putConstraint(SOUTH, head1Temp, -5, SOUTH, targetHead1Temp);
         layout.putConstraint(EAST, head1Temp, 0, EAST, actualLabel);
         layout.putConstraint(WEST, head1Temp, 0, WEST, actualLabel);
 
@@ -500,5 +515,66 @@ public class MonitorWindow extends JFrame {
 
     public void setHead1SetTemperature(String nozzle1SetTemperature) {
         this.targetHead1Temp.setText(nozzle1SetTemperature);
+    }
+
+
+
+    public void executePrinterCommand(IOAction action) {
+        synchronized (actions) {
+            actions.add(action);
+            actions.notifyAll();
+            while (actions.size() > 0) {
+                try {
+                    actions.wait(500);
+                } catch (InterruptedException ignore) { }
+            }
+        }
+    }
+
+    public void executePrinterActions(Printer printer, int timeout) {
+        synchronized (actions) {
+            while (actions.size() > 0) {
+                executePrinterCommandImmediate(actions.get(0));
+                actions.remove(0);
+                actions.notifyAll();
+            }
+            if (timeout > 0) {
+                try {
+                    actions.wait(timeout);
+                } catch (InterruptedException ignore) { }
+            }
+            if (System.currentTimeMillis() - lastStatus > STATUS_TIMER) {
+                executePrinterCommandImmediate(() -> {
+                    PrinterStatusResponse printStatus = printer.getPrinterStatus();
+                    processPrinterStatus(printStatus);
+                });
+                lastStatus = System.currentTimeMillis();
+            }
+        }
+    }
+
+    private void executePrinterCommandImmediate(IOAction ioAction) {
+        try {
+            ioAction.execute();
+        } catch (IOException e) {
+            setExceptionError("Exception executing action", e);
+        }
+    }
+
+    public void processPrinterStatus(PrinterStatusResponse printStatus) {
+        setStatus(printStatus.getCombinedStatus());
+        setJobId(printStatus.getPrintJob());
+        setLinesProgress(printStatus.getLineNumber());
+        setBedTemperature(printStatus.getBedTemperature());
+        setBedSetTemperature(printStatus.getBedSetTemperature());
+        setHead0Temperature(printStatus.getNozzle0Temperature());
+        setHead1Temperature(printStatus.getNozzle1Temperature());
+        setHead0SetTemperature(printStatus.getNozzle0SetTemperature());
+        setHead1SetTemperature(printStatus.getNozzle1SetTemperature());
+    }
+
+    public void processStandardResponse(StandardResponse response) {
+        // TODO Auto-generated method stub
+
     }
 }

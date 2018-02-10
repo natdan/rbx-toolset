@@ -15,7 +15,6 @@ package org.ah.robox;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -41,8 +40,6 @@ public class SendPrintJobCommand {
     private static MonitorWindow monitorWindow;
 
     private static boolean continueUploading = true;
-
-    private static List<IOAction> actions = new ArrayList<IOAction>();
 
     public static void execute(final Printer printer, List<String> args) throws Exception {
         boolean printJobFlag = false;
@@ -104,10 +101,10 @@ public class SendPrintJobCommand {
                 });
 
                 monitorWindow.setAbortPrintingAction(() -> {
-                    executePrinterCommand(monitorWindow, () -> {
+                    monitorWindow.executePrinterCommand(() -> {
                         try {
                             StandardResponse response = printer.abortPrint();
-                            processStandardResponse(monitorWindow, response);
+                            monitorWindow.processStandardResponse(response);
                             if (Main.processStandardResponse(printer, response)) {
                                 GCodeCommand.sendGCode(printer, AbortPrintCommand.FINISH_PRINT_GCODE);
                             }
@@ -117,17 +114,17 @@ public class SendPrintJobCommand {
                 });
 
                 monitorWindow.setPausePrintingAction(() -> {
-                    executePrinterCommand(monitorWindow, () -> {
+                    monitorWindow.executePrinterCommand(() -> {
                         PrinterStatusResponse printerStatus = printer.getPrinterStatus();
 
                         PrinterPause status = printerStatus.getCombinedStatus();
                         monitorWindow.setStatus(status);
                         if (status == PrinterPause.PAUSED) {
                             StandardResponse response = printer.resumePrinter();
-                            processStandardResponse(monitorWindow, response);
+                            monitorWindow.processStandardResponse(response);
                         } else if (status == PrinterPause.WORKING) {
                             StandardResponse response = printer.pausePrinter();
-                            processStandardResponse(monitorWindow, response);
+                            monitorWindow.processStandardResponse(response);
                         }
                     });
                 });
@@ -172,20 +169,7 @@ public class SendPrintJobCommand {
                             initiatePrintFlag = false;
                         } else if (monitor) {
                             monitorWindow.setUploadProgress(totalBytes);
-                            synchronized (actions) {
-                                while (actions.size() > 0) {
-                                    executePrinterCommandImmediate(monitorWindow, actions.get(0));
-                                    actions.remove(0);
-                                    actions.notifyAll();
-                                }
-                                if (System.currentTimeMillis() - MonitorCommand.lastStatus > MonitorCommand.STATUS_TIMER) {
-                                    executePrinterCommandImmediate(monitorWindow, () -> {
-                                        PrinterStatusResponse printStatus = printer.getPrinterStatus();
-                                        MonitorCommand.processPrinterStatus(monitorWindow, printStatus);
-                                    });
-                                    MonitorCommand.lastStatus = System.currentTimeMillis();
-                                }
-                            }
+                            monitorWindow.executePrinterActions(printer, 0);
                         } else {
                             if (Main.logLevel.intValue() <= Level.FINE.intValue()) {
                                 bytes = bytes + 512;
@@ -201,25 +185,7 @@ public class SendPrintJobCommand {
 
                 if (monitor) {
                     monitorWindow.setUploading(false);
-                    synchronized (actions) {
-                        while (true) {
-                            if (actions.size() > 0) {
-                                executePrinterCommandImmediate(monitorWindow, actions.get(0));
-                                actions.remove(0);
-                                actions.notifyAll();
-                            }
-                            try {
-                                actions.wait(1000);
-                            } catch (InterruptedException ignore) { }
-                            if (System.currentTimeMillis() - MonitorCommand.lastStatus > MonitorCommand.STATUS_TIMER) {
-                                executePrinterCommandImmediate(monitorWindow, () -> {
-                                    PrinterStatusResponse printStatus = printer.getPrinterStatus();
-                                    MonitorCommand.processPrinterStatus(monitorWindow, printStatus);
-                                });
-                                MonitorCommand.lastStatus = System.currentTimeMillis();
-                            }
-                        }
-                    }
+                    monitorWindow.executePrinterActions(printer, 1000);
                 }
 
             } finally {
@@ -228,34 +194,11 @@ public class SendPrintJobCommand {
 
             if (!monitor) {
                 logger.fine(" done.");
-                Main.processStandardResponse(printer, response);
+                while (true) {
+                    Main.processStandardResponse(printer, response);
+                }
             }
         }
-    }
-
-    private static void executePrinterCommandImmediate(MonitorWindow monitorWindow, IOAction ioAction) {
-        try {
-            ioAction.execute();
-        } catch (IOException e) {
-            monitorWindow.setExceptionError("Exception executing action", e);
-        }
-    }
-
-    private static void executePrinterCommand(MonitorWindow monitorWindow, IOAction action) {
-        synchronized (actions) {
-            actions.add(action);
-            actions.notifyAll();
-            while (actions.size() > 0) {
-                try {
-                    actions.wait(500);
-                } catch (InterruptedException ignore) { }
-            }
-        }
-    }
-
-    private static void processStandardResponse(MonitorWindow monitorWindow, StandardResponse response) {
-        // TODO Auto-generated method stub
-
     }
 
     public static void printHelp() {
@@ -270,9 +213,4 @@ public class SendPrintJobCommand {
         logger.info("  -p | --initiate-print - print is going to be started as well,");
         logger.info("                          like start command is invoked.");
     }
-
-    public static interface IOAction {
-        void execute() throws IOException;
-    }
-
 }

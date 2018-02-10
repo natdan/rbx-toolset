@@ -20,7 +20,9 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import org.ah.robox.comms.Printer;
+import org.ah.robox.comms.response.PrinterPause;
 import org.ah.robox.comms.response.PrinterStatusResponse;
+import org.ah.robox.comms.response.StandardResponse;
 import org.ah.robox.ui.MonitorWindow;
 import org.ah.robox.util.Detach;
 
@@ -33,31 +35,89 @@ public class MonitorCommand {
 
     private static final Logger logger = Logger.getLogger(MonitorCommand.class.getName());
 
-    public static int STATUS_TIMER = 1000; // each second
-
-    public static long lastStatus = 0;
-
     public static void execute(Printer printer, List<String> args) throws Exception {
 
-        if (!Main.detachedFlag) {
+        boolean detachFlag = false;
+        boolean fileFlag = false;
+        File file = null;
+        for (String a : args) {
+            if (fileFlag) {
+                fileFlag = false;
+                file = new File(a);
+            } else if ("-?".equals(a) || "-h".equals(a) || "--help".equals(a)) {
+                printHelp();
+                System.exit(0);
+            } else if ("-f".equals(a) || "--file".equals(a)) {
+                fileFlag = true;
+            } else if ("-f".equals(a) || "--file".equals(a)) {
+                fileFlag = true;
+            } else if ("-d".equals(a) || "--detach".equals(a)) {
+                detachFlag = true;
+            } else {
+                logger.severe("Unknown option: '" + a + "'");
+                printHelp();
+                System.exit(1);
+            }
+        }
 
+        if (detachFlag && !Main.detachedFlag) {
             Detach.detach(Main.class.getName());
         } else {
 
             MonitorWindow monitorWindow = new MonitorWindow();
+            monitorWindow.setUploading(false);
             monitorWindow.setVisible(true);
+
+            monitorWindow.setAbortPrintingAction(() -> {
+                monitorWindow.executePrinterCommand(() -> {
+                    try {
+                        StandardResponse response = printer.abortPrint();
+                        monitorWindow.processStandardResponse(response);
+                        if (Main.processStandardResponse(printer, response)) {
+                            GCodeCommand.sendGCode(printer, AbortPrintCommand.FINISH_PRINT_GCODE);
+                        }
+                    } catch (IOException e) { }
+                    System.exit(0);
+                });
+            });
+
+            monitorWindow.setPausePrintingAction(() -> {
+                monitorWindow.executePrinterCommand(() -> {
+                    PrinterStatusResponse printerStatus = printer.getPrinterStatus();
+
+                    PrinterPause status = printerStatus.getCombinedStatus();
+                    monitorWindow.setStatus(status);
+                    if (status == PrinterPause.PAUSED) {
+                        StandardResponse response = printer.resumePrinter();
+                        monitorWindow.processStandardResponse(response);
+                    } else if (status == PrinterPause.WORKING) {
+                        StandardResponse response = printer.pausePrinter();
+                        monitorWindow.processStandardResponse(response);
+                    }
+                });
+            });
+
+            if (file != null) {
+                try {
+                    int totalLines = UploadCommand.countLines(file);
+                    monitorWindow.setLinesTotal(totalLines);
+                } catch (IOException e) {
+                    monitorWindow.setExceptionError("Exception reading file " + file.getAbsolutePath(), e);
+                }
+            }
 
             PrinterStatusResponse printStatus = printer.getPrinterStatus();
 
             String printJob = printStatus.getPrintJob();
-
-            boolean hasRunningJobs = printJob != null && printJob.length() > 0;
 
             UploadCommand.cleanupConfigDir(printJob);
             if (printStatus.getLineNumber() > PrintStatusCommand.ESTIMATE_MIN_LINES) {
                 createEstimateFile(printJob, printStatus.getLineNumber());
             }
 
+            while (true) {
+                monitorWindow.executePrinterActions(printer, 1000);
+            }
         }
     }
 
@@ -257,17 +317,5 @@ public class MonitorCommand {
         public int getTotalLines() {
             return totalLines;
         }
-    }
-
-    public static void processPrinterStatus(MonitorWindow monitorWindow, PrinterStatusResponse printStatus) {
-        monitorWindow.setStatus(printStatus.getCombinedStatus());
-        monitorWindow.setJobId(printStatus.getPrintJob());
-        monitorWindow.setLinesProgress(printStatus.getLineNumber());
-        monitorWindow.setBedTemperature(printStatus.getBedTemperature());
-        monitorWindow.setBedSetTemperature(printStatus.getBedSetTemperature());
-        monitorWindow.setHead0Temperature(printStatus.getNozzle0Temperature());
-        monitorWindow.setHead1Temperature(printStatus.getNozzle1Temperature());
-        monitorWindow.setHead0SetTemperature(printStatus.getNozzle0SetTemperature());
-        monitorWindow.setHead1SetTemperature(printStatus.getNozzle1SetTemperature());
     }
 }
