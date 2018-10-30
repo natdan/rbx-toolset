@@ -321,6 +321,7 @@ public class Main {
         logger.info("  install   - installs in local (linux) system");
         logger.info("  list      - lists attached printers");
         logger.info("  status    - displays printer's status");
+        logger.info("  monitor   - starts GUI to display current status and progress");
         logger.info("  pause     - pauses current print if there's one");
         logger.info("  resume    - resumes current print if there's one");
         logger.info("  abort     - aborts current print if there's one");

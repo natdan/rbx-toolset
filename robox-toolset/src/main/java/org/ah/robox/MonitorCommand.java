@@ -49,8 +49,6 @@ public class MonitorCommand {
                 System.exit(0);
             } else if ("-f".equals(a) || "--file".equals(a)) {
                 fileFlag = true;
-            } else if ("-f".equals(a) || "--file".equals(a)) {
-                fileFlag = true;
             } else if ("-d".equals(a) || "--detach".equals(a)) {
                 detachFlag = true;
             } else {
@@ -133,13 +131,9 @@ public class MonitorCommand {
         logger.info("  -s | --short         - displays values only");
         logger.info("                         It is machine readable format.");
 
-        logger.info("  -e | --estimate      - displays estimate time until job completion.");
-        logger.info("                         See -f/--file option for more details.");
-        logger.info("  -j | --job           - displays job id");
-        logger.info("  -b | --busy          - displays busy flag");
-        logger.info("  -ps | --pause-status - displays pause status");
-        logger.info("  -cl | --current-line - displays current line number");
-        logger.info("  -tl | --total-lines  - displays total line number. Only if file was supplied.");
+        logger.info("  -f | --file           - file of the job - xxx_robox.gcode file (for estimations).");
+        logger.info("  -d | --detach         - detach this process from current shell;");
+        logger.info("                          normally used with monitor.");
 
         logger.info("");
         logger.info("For estimate to work, this utility needs original xxx_robox.gcode file.");

@@ -207,10 +207,13 @@ public class SendPrintJobCommand {
         Main.printGeneralOptions();
         logger.info("");
         Main.printSpecificOptions();
-        logger.info("  -f | --file          - gcode file. Mandatory option.");
-        logger.info("  -id | --print-job-id - job id. If not specified random one");
-        logger.info("                         is going to be generated.");
+        logger.info("  -f | --file           - gcode file. Mandatory option.");
+        logger.info("  -id | --print-job-id  - job id. If not specified random one");
+        logger.info("                          is going to be generated.");
         logger.info("  -p | --initiate-print - print is going to be started as well,");
         logger.info("                          like start command is invoked.");
+        logger.info("  -m | --monitor        - start UI to monitor upload/print");
+        logger.info("  -d | --detach         - detach this process from current shell;");
+        logger.info("                          normally used with monitor.");
     }
 }
