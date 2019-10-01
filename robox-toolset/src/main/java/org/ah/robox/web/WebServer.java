@@ -35,9 +35,11 @@ import org.ah.robox.comms.PrinterDiscovery;
 import org.ah.robox.comms.response.StandardResponse;
 import org.ah.robox.web.UploadFile.Result;
 
+import com.sun.net.httpserver.HttpContext;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.BasicAuthenticator;
 
 /**
  *
@@ -65,6 +67,8 @@ public class WebServer {
     private int automaticRefresh = -1;
     private StatusManager statusManager;
     private ImageCache imageCache;
+    private String username = null;
+    private String password = null;
 
     public WebServer(PrinterDiscovery printerDiscovery) {
         this.printerDiscovery = printerDiscovery;
@@ -98,7 +102,13 @@ public class WebServer {
 
         // TODO add other templates
         WebServer.MainHandler mainHandler = new WebServer.MainHandler(statusManager, templateFile, null, null, null, imageCache, staticFiles);
-        server.createContext("/", mainHandler);
+        HttpContext context = server.createContext("/", mainHandler);
+        if (username != null && password != null) {
+            context.setAuthenticator(new BasicAuthenticator("robox") {
+                @Override public boolean checkCredentials(String username, String password) {
+                    return username.equals(WebServer.this.username) && password.equals(WebServer.this.password);
+                }});
+        }
         server.setExecutor(Executors.newCachedThreadPool(new ThreadFactory() {
             @Override
             public Thread newThread(Runnable runnable) {
@@ -230,6 +240,13 @@ public class WebServer {
         this.automaticRefresh = automaticRefresh;
     }
 
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
 
     private static enum ReturnContent {
         MAIN_BODY, CAPTURE_IMAGE, STATIC_FILE, NOT_FOUND, REDIRECT_TO_MAIN_BODY, REDIRECT_TO_ONE_PRINTER, LIST_PRINTERS, NO_PRINTERS

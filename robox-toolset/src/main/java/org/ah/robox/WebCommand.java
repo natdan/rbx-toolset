@@ -45,6 +45,7 @@ public class WebCommand {
         boolean templateFileFlag = false;
         boolean refreshCommandFormatFlag = false;
         boolean automaticRefrehsFlag = false;
+        boolean authenticationFlag = false;
         boolean startFlag = false;
         boolean stopFlag = false;
         boolean statusFlag = false;
@@ -115,6 +116,16 @@ public class WebCommand {
                     logger.severe("Bad number for automatic refresh '" + a + "'");
                     System.exit(1);
                 }
+            } else if (authenticationFlag) {
+                int i = a.indexOf(':');
+                if (i < 0) {
+                    webServer.setUsername("");
+                    webServer.setPassword(a);
+                } else {
+                    webServer.setUsername(a.substring(0, i));
+                    webServer.setPassword(a.substring(i + 1));
+                }
+                authenticationFlag = false;
             } else if ("-p".equals(a) || "--port".equals(a)) {
                 portFlag = true;
             } else if ("-rs".equals(a) || "--refresh-status-interval".equals(a)) {
@@ -135,6 +146,8 @@ public class WebCommand {
                 staticDirFlag = true;
             } else if ("-ar".equals(a) || "--automatic-refresh".equals(a)) {
                 automaticRefrehsFlag = true;
+            } else if ("-ah".equals(a) || "--authentication".equals(a)) {
+                authenticationFlag = true;
             } else if ("start".equals(a)) {
                 if (statusFlag || stopFlag) {
                     logger.severe("start/stop/status are mutually exclusive commands. Supply only one at the time.");
@@ -456,6 +469,10 @@ public class WebCommand {
         logger.info("  -ar | --automatic-refresh <value-in-seconds>");
         logger.info("        Enables internal template to create html page refresh. External templates");
         logger.info("        can utilise it by adding ${automatic-refresh} placeholder in html head part.");
+        logger.info("  -ah | --authentication <user:password>");
+        logger.info("        Enables basic HTTP authentication. Username and password specified");
+        logger.info("        are to be separated by ':'. If no ':' specified then username is left empty.");
+
         logger.info("");
         logger.info("Commands are optional. If none specified then web server will start in current process.");
         logger.info("");
@@ -466,9 +483,10 @@ public class WebCommand {
         logger.info("");
         logger.info("Template file should have following placeholders:");
         logger.info("");
-        logger.info("${status}   - printing status (\"Unknown\", \"Working\", \"Pausing\", \"Paused\", \"Resuming\")");
-        logger.info("${busy}     - is printer busy or not (\"true\", \"false\"). Can be used directly in javascript.");
-        logger.info("${job_id}   - printer job id.");
+        logger.info("${status}     - printing status (\"Unknown\", \"Working\", \"Pausing\", \"Paused\", \"Resuming\")");
+        logger.info("${busy}       - is printer busy or not (\"true\", \"false\"). Can be used directly in javascript.");
+        logger.info("${job_id}     - printer job id.");
+        logger.info("${printer_id} - currently selected printer id. Used in building URLs.");
         logger.info("${error_msg}      - previous request error message");
         logger.info("${estimate}       - estimate time in %h:%m:%s format");
         logger.info("${estimate_hours} - estimate time hours");
@@ -527,6 +545,5 @@ public class WebCommand {
         logger.info("${temp_state}    - temperature state ('working', 'cooling', 'heating bed' or 'heating nozzles')");
 
         logger.info("");
-
     }
 }

@@ -152,7 +152,7 @@ public class TemplateEngine {
                 ? "<img src=\"/capture.jpg\"/>" : "");
         substitutions.put("commands_css_display", webServer.isAllowCommandsFlag() ? "inline" : "none");
         substitutions.put("automatic-refresh", webServer.getAutomaticRefrehs() >= 0 ? "<meta http-equiv=\"refresh\" content=\"" + webServer.getAutomaticRefrehs() + "\" >" : "");
-        if (status.getPrinter() != null) {
+        if (status != null && status.getPrinter() != null) {
             substitutions.put("printer_id", status.getPrinter().getPrinterId());
         } else {
             // TODO is this OK?

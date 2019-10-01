@@ -85,12 +85,15 @@ public class ResponseFactory {
             extractByte("doorOpen", BYTE_TO_BOOLEAN_CONVERTER);
             extractByte("reelButton", BYTE_TO_BOOLEAN_CONVERTER);
             skip(5);
+            // E index, D index, Top Z, Extruder E, Extruder D,
             skip(1);
+            // Heater mode: OFF, Normal, First Layer
 
             extractString("nozzle0Temperature", 8, TRIM_STRING_CONVERTER);
             extractString("nozzle0SetTemperature", 8, TRIM_STRING_CONVERTER);
 
             skip(9);
+            // First layer set temperature + heater on
 
             extractString("nozzle1Temperature", 8, TRIM_STRING_CONVERTER);
             extractString("nozzle1SetTemperature", 8, TRIM_STRING_CONVERTER);
@@ -101,6 +104,7 @@ public class ResponseFactory {
             extractString("bedSetTemperature", 8, TRIM_STRING_CONVERTER);
 
             skip(8);
+            // First layer bed temperature
             extractByte("fan", BYTE_TO_BOOLEAN_CONVERTER);
 
             extractString("ambientTemperature", 8, TRIM_STRING_CONVERTER);
@@ -117,6 +121,7 @@ public class ResponseFactory {
             extractString("zPosition", 8, TRIM_STRING_CONVERTER);
 
             skip(8);
+            // Filament skip?
 
             skip(8);
             extractString("filamentMultiplier", 8, TRIM_STRING_CONVERTER);
