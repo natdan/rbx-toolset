@@ -1,7 +1,9 @@
 package org.ah.robox.proxy;
 
-import static org.ah.robox.comms.LocalProxyPrinterDiscovery.LOCAL_PROXY_DEFAULT_PORT;
-import static org.ah.robox.comms.LocalProxyPrinterDiscovery.isLocalProxyRunning;
+import org.ah.robox.Main;
+import org.ah.robox.comms.BasePrinterDiscovery;
+import org.ah.robox.comms.PrinterChannel;
+import org.ah.robox.comms.PrinterDiscovery;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -19,10 +21,10 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.ah.robox.Main;
-import org.ah.robox.comms.BasePrinterDiscovery;
-import org.ah.robox.comms.PrinterChannel;
-import org.ah.robox.comms.PrinterDiscovery;
+import static org.ah.robox.comms.LocalProxyPrinterDiscovery.LOCAL_PROXY_DEFAULT_PORT;
+import static org.ah.robox.comms.LocalProxyPrinterDiscovery.isLocalProxyRunning;
+
+import static java.lang.String.join;
 
 public class ProxyCommand {
 
@@ -88,9 +90,9 @@ public class ProxyCommand {
             logger.severe("Cannot install on any other OS but Linux.");
             System.exit(-1);
         }
-        File rbxProxyFile = new File("/etc/init.d/rbx-proxy");
+        File rbxProxyFile = new File("/etc/systemd/system/rbx-proxy.service");
 
-        InputStream is = ProxyCommand.class.getResourceAsStream("/rbx-proxy");
+        InputStream is = ProxyCommand.class.getResourceAsStream("/rbx-proxy.service");
         try {
             try {
                 FileOutputStream fos = new FileOutputStream(rbxProxyFile);
@@ -101,7 +103,7 @@ public class ProxyCommand {
                     fos.write(buf, 0, r);
 
                 } catch (IOException e) {
-                    logger.log(Level.SEVERE, "Failed to create /etc/init.d/rbx-proxy", e);
+                    logger.log(Level.SEVERE, "Failed to create /etc/systemd/system/rbx-proxy.service", e);
                 } finally {
                     try {
                         fos.close();
@@ -110,13 +112,13 @@ public class ProxyCommand {
             } catch (FileNotFoundException e) {
                 String msg = e.getMessage();
                 if (msg.endsWith("(Permission denied)")) {
-                    logger.severe("Cannot create file /etc/init.d/rbx-proxy due to permissions.");
+                    logger.severe("Cannot create file /etc/systemd/system/rbx-proxy.service due to permissions.");
                     logger.severe("Please try running it with sudo:");
                     logger.severe("");
                     logger.severe("sudo rbx proxy install");
                     System.exit(-1);
                 } else {
-                    logger.log(Level.SEVERE, "Failed to create /etc/init.d/rbx-proxy", e);
+                    logger.log(Level.SEVERE, "Failed to create /etc/systemd/system/rbx-proxy.service", e);
                 }
             }
         } finally {
@@ -132,15 +134,18 @@ public class ProxyCommand {
             System.exit(-1);
         }
 
-        if (!execute("systemctl", "daemon-reload")) {
-            logger.severe("Failed to run 'systemctl daemon-reload'. Please try running rbx with sudo.");
-            System.exit(-1);
-        }
-        if (!execute("systemctl", "enable", "rbx-proxy")) {
-            logger.severe("Failed to run 'systemctl daemon-reload'. Please try running rbx with sudo.");
+//        if (!execute("systemctl", "daemon-reload")) {
+//            logger.severe("Failed to run 'systemctl daemon-reload'. Please try running rbx with sudo.");
+//            System.exit(-1);
+//        }
+        if (!execute("systemctl", "enable", "rbx-proxy.service")) {
+            logger.severe("Failed to run 'systemctl enable'. Please try running rbx with sudo.");
             System.exit(-1);
         }
         logger.info("Service rbx-proxy successfully installed");
+        logger.info("");
+        logger.info("You can start service with:");
+        logger.info("    sudo service rbx-proxy start");
     }
 
     private static void startService() {
@@ -180,7 +185,7 @@ public class ProxyCommand {
             }
             int exitValue = p.waitFor();
             if (exitValue != 0) {
-                logger.severe("Got exit code " + exitValue + " while running '" + command + "'");
+                logger.severe("Got exit code " + exitValue + " while running '" + join(" ", command) + "'");
                 return false;
             }
         } catch (Exception e) {
@@ -336,7 +341,7 @@ public class ProxyCommand {
         logger.info(" rbx proxy               - starts proxy in current shell");
         logger.info(" rbx -vv proxy           - starts proxy with detailed verbose outout");
         logger.info(" rbx proxy status        - shows if the proxy is already running on the current computer");
-        logger.info(" sudo rbx proxy install  - creates /etc/init.d/rbx-proxy file and sets it up as a daemon");
+        logger.info(" sudo rbx proxy install  - creates /etc/systemd/system/rbx-proxy.service file and sets it up as a daemon");
         logger.info(" sudo rbx proxy start    - starts proxy daemon");
         logger.info(" sudo rbx proxy stop     - stops proxy daemon");
     }
